@@ -1,0 +1,154 @@
+import type { CopilotPayload } from '../types/CopilotPayload';
+
+export interface ContextWindowMetrics {
+    windowSize: number | null;
+    usedTokens: number | null;
+    contextLengthTokens: number | null;
+    usedPercentage: number | null;
+    remainingPercentage: number | null;
+    totalInputTokens: number | null;
+    totalOutputTokens: number | null;
+    cachedTokens: number | null;
+    totalTokens: number | null;
+    remainingTokens: number | null;
+    lastCallInputTokens: number | null;
+    lastCallOutputTokens: number | null;
+    cacheReadTokens: number | null;
+    cacheWriteTokens: number | null;
+}
+
+function toFiniteNonNegativeNumber(value: unknown): number | null {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return null;
+    }
+
+    return Math.max(0, value);
+}
+
+function clampPercentage(value: number): number {
+    return Math.max(0, Math.min(100, value));
+}
+
+export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMetrics {
+    const contextWindow = data?.context_window;
+
+    const empty: ContextWindowMetrics = {
+        windowSize: null,
+        usedTokens: null,
+        contextLengthTokens: null,
+        usedPercentage: null,
+        remainingPercentage: null,
+        totalInputTokens: null,
+        totalOutputTokens: null,
+        cachedTokens: null,
+        totalTokens: null,
+        remainingTokens: null,
+        lastCallInputTokens: null,
+        lastCallOutputTokens: null,
+        cacheReadTokens: null,
+        cacheWriteTokens: null
+    };
+
+    if (!contextWindow) {
+        return empty;
+    }
+
+    const rawWindowSize = toFiniteNonNegativeNumber(contextWindow.context_window_size);
+    const windowSize = rawWindowSize !== null && rawWindowSize > 0 ? rawWindowSize : null;
+    const totalInputTokens = toFiniteNonNegativeNumber(contextWindow.total_input_tokens);
+    const totalOutputTokens = toFiniteNonNegativeNumber(contextWindow.total_output_tokens);
+    const cacheReadTokens = toFiniteNonNegativeNumber(contextWindow.total_cache_read_tokens);
+    const cacheWriteTokens = toFiniteNonNegativeNumber(contextWindow.total_cache_write_tokens);
+    const remainingTokens = toFiniteNonNegativeNumber(contextWindow.remaining_tokens);
+    const lastCallInputTokens = toFiniteNonNegativeNumber(contextWindow.last_call_input_tokens);
+    const lastCallOutputTokens = toFiniteNonNegativeNumber(contextWindow.last_call_output_tokens);
+
+    const cachedTokens = cacheReadTokens !== null || cacheWriteTokens !== null
+        ? (cacheReadTokens ?? 0) + (cacheWriteTokens ?? 0)
+        : null;
+
+    let currentUsageTotalTokens: number | null = null;
+    let contextLengthTokens: number | null = null;
+
+    if (contextWindow.current_usage && typeof contextWindow.current_usage === 'object') {
+        const usage = contextWindow.current_usage;
+        const inputTokens = toFiniteNonNegativeNumber(usage.input_tokens) ?? 0;
+        const outputTokens = toFiniteNonNegativeNumber(usage.output_tokens) ?? 0;
+        const cacheCreationTokens = toFiniteNonNegativeNumber(usage.cache_creation_input_tokens) ?? 0;
+        const cacheReadInputTokens = toFiniteNonNegativeNumber(usage.cache_read_input_tokens) ?? 0;
+
+        currentUsageTotalTokens = inputTokens + outputTokens + cacheCreationTokens + cacheReadInputTokens;
+        contextLengthTokens = inputTokens + cacheCreationTokens + cacheReadInputTokens;
+    }
+
+    const rawUsedPercentage = toFiniteNonNegativeNumber(contextWindow.used_percentage);
+    const rawRemainingPercentage = toFiniteNonNegativeNumber(contextWindow.remaining_percentage);
+    const usedTokensFromPercentage = rawUsedPercentage !== null && windowSize !== null
+        ? (rawUsedPercentage / 100) * windowSize
+        : null;
+
+    const usedTokens = currentUsageTotalTokens ?? usedTokensFromPercentage;
+
+    const usedPercentage = rawUsedPercentage !== null
+        ? clampPercentage(rawUsedPercentage)
+        : usedTokens !== null && windowSize !== null && windowSize > 0
+            ? clampPercentage((usedTokens / windowSize) * 100)
+            : null;
+
+    const remainingPercentage = rawRemainingPercentage !== null
+        ? clampPercentage(rawRemainingPercentage)
+        : usedPercentage !== null
+            ? 100 - usedPercentage
+            : null;
+
+    const totalTokens = currentUsageTotalTokens
+        ?? toFiniteNonNegativeNumber(contextWindow.total_tokens)
+        ?? (totalInputTokens !== null && totalOutputTokens !== null
+            ? totalInputTokens + totalOutputTokens
+            : null);
+
+    return {
+        windowSize,
+        usedTokens,
+        contextLengthTokens: contextLengthTokens ?? usedTokens,
+        usedPercentage,
+        remainingPercentage,
+        totalInputTokens,
+        totalOutputTokens,
+        cachedTokens,
+        totalTokens,
+        remainingTokens,
+        lastCallInputTokens,
+        lastCallOutputTokens,
+        cacheReadTokens,
+        cacheWriteTokens
+    };
+}
+
+export function getContextWindowInputTotalTokens(data?: CopilotPayload): number | null {
+    return getContextWindowMetrics(data).totalInputTokens;
+}
+
+export function getContextWindowOutputTotalTokens(data?: CopilotPayload): number | null {
+    return getContextWindowMetrics(data).totalOutputTokens;
+}
+
+export function getContextWindowCachedTokens(data?: CopilotPayload): number | null {
+    return getContextWindowMetrics(data).cachedTokens;
+}
+
+export function getContextWindowTotalTokens(data?: CopilotPayload): number | null {
+    return getContextWindowMetrics(data).totalTokens;
+}
+
+export function getContextWindowSize(data?: CopilotPayload): number | null {
+    return getContextWindowMetrics(data).windowSize;
+}
+
+export function getContextWindowUsedPercentage(data?: CopilotPayload): number | null {
+    return getContextWindowMetrics(data).usedPercentage;
+}
+
+export function getContextWindowRemainingTokens(data?: CopilotPayload): number | null {
+    return getContextWindowMetrics(data).remainingTokens;
+}

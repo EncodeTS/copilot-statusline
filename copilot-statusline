@@ -1,0 +1,10 @@
+#!/bin/bash
+# Local development launcher for copilot-statusline
+# Copilot CLI closes stdin quickly — bash buffers it first.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -t 0 ]; then
+    exec bun "$SCRIPT_DIR/src/copilot-statusline.ts" "$@"
+else
+    INPUT=$(cat)
+    echo "$INPUT" | exec bun "$SCRIPT_DIR/src/copilot-statusline.ts" "$@"
+fi
