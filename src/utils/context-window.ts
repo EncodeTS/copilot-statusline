@@ -83,11 +83,20 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
 
     const rawUsedPercentage = toFiniteNonNegativeNumber(contextWindow.used_percentage);
     const rawRemainingPercentage = toFiniteNonNegativeNumber(contextWindow.remaining_percentage);
+
+    // Derive usedTokens from authoritative sources first:
+    // 1. remaining_tokens (most accurate — direct from API)
+    // 2. used_percentage * windowSize
+    // 3. current_usage sums (last resort — these are cumulative across all calls,
+    //    so they can exceed the window size when caching is heavy)
+    const usedTokensFromRemaining = windowSize !== null && remainingTokens !== null
+        ? windowSize - remainingTokens
+        : null;
     const usedTokensFromPercentage = rawUsedPercentage !== null && windowSize !== null
         ? (rawUsedPercentage / 100) * windowSize
         : null;
 
-    const usedTokens = currentUsageTotalTokens ?? usedTokensFromPercentage;
+    const usedTokens = usedTokensFromRemaining ?? usedTokensFromPercentage ?? currentUsageTotalTokens;
 
     const usedPercentage = rawUsedPercentage !== null
         ? clampPercentage(rawUsedPercentage)
@@ -107,10 +116,14 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
             ? totalInputTokens + totalOutputTokens
             : null);
 
+    // contextLengthTokens: use the same authoritative sources as usedTokens.
+    // Only fall back to input-only current_usage sum if no better source exists.
+    const contextLengthFromAuthoritative = usedTokensFromRemaining ?? usedTokensFromPercentage;
+
     return {
         windowSize,
         usedTokens,
-        contextLengthTokens: contextLengthTokens ?? usedTokens,
+        contextLengthTokens: contextLengthFromAuthoritative ?? contextLengthTokens ?? usedTokens,
         usedPercentage,
         remainingPercentage,
         totalInputTokens,

@@ -101,5 +101,61 @@ describe('getContextWindowMetrics', () => {
         expect(result.remainingTokens).toBe(164780);
         expect(result.cacheReadTokens).toBe(0);
         expect(result.cacheWriteTokens).toBe(0);
+        // usedTokens/contextLengthTokens derived from remaining_tokens
+        expect(result.usedTokens).toBe(200000 - 164780);
+        expect(result.contextLengthTokens).toBe(200000 - 164780);
+    });
+
+    it('derives usedTokens from remaining_tokens, not cumulative current_usage', () => {
+        // Simulates a long session with heavy caching where current_usage sums
+        // far exceed the context window (cumulative across all API calls)
+        const data: CopilotPayload = {
+            context_window: {
+                context_window_size: 1000000,
+                total_input_tokens: 3100000,
+                total_output_tokens: 22400,
+                total_cache_read_tokens: 2800000,
+                total_cache_write_tokens: 0,
+                total_tokens: 3122400,
+                used_percentage: 75,
+                remaining_percentage: 25,
+                remaining_tokens: 250000,
+                last_call_input_tokens: 50000,
+                last_call_output_tokens: 1200,
+                current_usage: {
+                    input_tokens: 3100000,
+                    output_tokens: 22400,
+                    cache_creation_input_tokens: 0,
+                    cache_read_input_tokens: 2800000
+                }
+            }
+        };
+
+        const result = getContextWindowMetrics(data);
+        expect(result.windowSize).toBe(1000000);
+        // usedTokens should be derived from remaining_tokens, NOT current_usage sums
+        expect(result.usedTokens).toBe(750000); // 1000000 - 250000
+        expect(result.contextLengthTokens).toBe(750000);
+        expect(result.usedPercentage).toBe(75);
+        expect(result.remainingPercentage).toBe(25);
+        // totalTokens should still use current_usage sum (it IS cumulative)
+        expect(result.totalTokens).toBe(3100000 + 22400 + 2800000);
+    });
+
+    it('falls back to used_percentage when remaining_tokens is absent', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                context_window_size: 200000,
+                total_input_tokens: 50000,
+                total_output_tokens: 5000,
+                used_percentage: 30,
+                remaining_percentage: 70
+            }
+        };
+
+        const result = getContextWindowMetrics(data);
+        expect(result.usedTokens).toBe(60000); // 30% of 200000
+        expect(result.contextLengthTokens).toBe(60000);
+        expect(result.usedPercentage).toBe(30);
     });
 });
