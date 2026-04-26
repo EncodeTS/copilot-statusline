@@ -13,13 +13,13 @@ describe('git-remote', () => {
     it('builds GitLab branch URLs from remote info', () => {
         const remote: RemoteInfo = {
             name: 'origin',
-            url: 'git@gitlab.example.com:group/project.git',
-            host: 'gitlab.example.com',
+            url: 'git@gitlab.com:group/project.git',
+            host: 'gitlab.com',
             owner: 'group',
             repo: 'project'
         };
 
-        expect(buildBranchWebUrl(remote, 'feature/demo')).toBe('https://gitlab.example.com/group/project/-/tree/feature/demo');
+        expect(buildBranchWebUrl(remote, 'feature/demo')).toBe('https://gitlab.com/group/project/-/tree/feature/demo');
     });
 
     it('preserves explicit ports in HTTP remote URLs', () => {

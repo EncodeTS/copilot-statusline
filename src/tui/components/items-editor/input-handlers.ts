@@ -64,6 +64,22 @@ function getPickerCategories(widgetCategories: string[]): string[] {
     return [...widgetCategories];
 }
 
+function wrapIndex(index: number, length: number): number {
+    if (index < 0) {
+        return length - 1;
+    }
+
+    if (index > length - 1) {
+        return 0;
+    }
+
+    return index;
+}
+
+function getAdjacentIndex(currentIndex: number, length: number, isForward: boolean): number {
+    return wrapIndex(currentIndex + (isForward ? 1 : -1), length);
+}
+
 export function normalizePickerState(
     state: WidgetPickerState,
     widgetCatalog: WidgetCatalogEntry[],
@@ -190,9 +206,7 @@ export function handlePickerInputMode({
                     currentIndex = 0;
                 }
 
-                const nextIndex = key.downArrow
-                    ? (currentIndex + 1 > topLevelSearchEntries.length - 1 ? 0 : currentIndex + 1)
-                    : (currentIndex - 1 < 0 ? topLevelSearchEntries.length - 1 : currentIndex - 1);
+                const nextIndex = getAdjacentIndex(currentIndex, topLevelSearchEntries.length, Boolean(key.downArrow));
                 const nextType = topLevelSearchEntries[nextIndex]?.type ?? null;
                 setPickerState(setWidgetPicker, normalizeState, prev => ({
                     ...prev,
@@ -208,9 +222,7 @@ export function handlePickerInputMode({
                     currentIndex = 0;
                 }
 
-                const nextIndex = key.downArrow
-                    ? (currentIndex + 1 > filteredCategories.length - 1 ? 0 : currentIndex + 1)
-                    : (currentIndex - 1 < 0 ? filteredCategories.length - 1 : currentIndex - 1);
+                const nextIndex = getAdjacentIndex(currentIndex, filteredCategories.length, Boolean(key.downArrow));
                 const nextCategory = filteredCategories[nextIndex] ?? null;
                 setPickerState(setWidgetPicker, normalizeState, prev => ({
                     ...prev,
@@ -262,9 +274,7 @@ export function handlePickerInputMode({
                 currentIndex = 0;
             }
 
-            const nextIndex = key.downArrow
-                ? (currentIndex + 1 > filteredWidgets.length - 1 ? 0 : currentIndex + 1)
-                : (currentIndex - 1 < 0 ? filteredWidgets.length - 1 : currentIndex - 1);
+            const nextIndex = getAdjacentIndex(currentIndex, filteredWidgets.length, Boolean(key.downArrow));
             const nextType = filteredWidgets[nextIndex]?.type ?? null;
             setPickerState(setWidgetPicker, normalizeState, prev => ({
                 ...prev,
@@ -310,7 +320,7 @@ export function handleMoveInputMode({
 }: HandleMoveInputModeArgs): void {
     if (key.upArrow && widgets.length > 1) {
         const newWidgets = [...widgets];
-        const targetIndex = selectedIndex - 1 < 0 ? widgets.length - 1 : selectedIndex - 1;
+        const targetIndex = getAdjacentIndex(selectedIndex, widgets.length, false);
         const temp = newWidgets[selectedIndex];
         const prev = newWidgets[targetIndex];
         if (temp && prev) {
@@ -320,7 +330,7 @@ export function handleMoveInputMode({
         setSelectedIndex(targetIndex);
     } else if (key.downArrow && widgets.length > 1) {
         const newWidgets = [...widgets];
-        const targetIndex = selectedIndex + 1 > widgets.length - 1 ? 0 : selectedIndex + 1;
+        const targetIndex = getAdjacentIndex(selectedIndex, widgets.length, true);
         const temp = newWidgets[selectedIndex];
         const next = newWidgets[targetIndex];
         if (temp && next) {
@@ -367,9 +377,9 @@ export function handleNormalInputMode({
     getUniqueBackgroundColor
 }: HandleNormalInputModeArgs): void {
     if (key.upArrow && widgets.length > 0) {
-        setSelectedIndex(selectedIndex - 1 < 0 ? widgets.length - 1 : selectedIndex - 1);
+        setSelectedIndex(getAdjacentIndex(selectedIndex, widgets.length, false));
     } else if (key.downArrow && widgets.length > 0) {
-        setSelectedIndex(selectedIndex + 1 > widgets.length - 1 ? 0 : selectedIndex + 1);
+        setSelectedIndex(getAdjacentIndex(selectedIndex, widgets.length, true));
     } else if (key.leftArrow && widgets.length > 0) {
         openWidgetPicker('change');
     } else if (key.rightArrow && widgets.length > 0) {

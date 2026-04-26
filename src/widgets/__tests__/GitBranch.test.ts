@@ -46,7 +46,7 @@ afterEach(() => {
 
 gitDescribe('GitBranchWidget', () => {
     it('links branches to GitLab-style remote web URLs', () => {
-        const cwd = createRepo('git@gitlab.example.com:group/project.git');
+        const cwd = createRepo('git@gitlab.com:group/project.git');
         const widget = new GitBranchWidget();
 
         const output = widget.render(
@@ -55,7 +55,7 @@ gitDescribe('GitBranchWidget', () => {
             DEFAULT_SETTINGS
         );
 
-        expect(output).toBe('\x1b]8;;https://gitlab.example.com/group/project/-/tree/feature/demo\x1b\\⎇ feature/demo\x1b]8;;\x1b\\');
+        expect(output).toBe('\x1b]8;;https://gitlab.com/group/project/-/tree/feature/demo\x1b\\⎇ feature/demo\x1b]8;;\x1b\\');
     });
 
     it('reads legacy linkToGitHub metadata and toggles to linkToRepo', () => {

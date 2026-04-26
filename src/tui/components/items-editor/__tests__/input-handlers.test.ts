@@ -289,6 +289,33 @@ describe('items-editor input handlers', () => {
         expect(setSelectedIndex).toHaveBeenCalledWith(1);
     });
 
+    it('clones selected widget without metadata', () => {
+        const widgets: WidgetItem[] = [
+            { id: '1', type: 'tokens-input' }
+        ];
+        const onUpdate = vi.fn();
+
+        handleNormalInputMode({
+            input: 'k',
+            key: {},
+            widgets,
+            selectedIndex: 0,
+            separatorChars: ['|', '-'],
+            onBack: vi.fn(),
+            onUpdate,
+            setSelectedIndex: vi.fn(),
+            setMoveMode: vi.fn(),
+            setShowClearConfirm: vi.fn(),
+            openWidgetPicker: vi.fn(),
+            getCustomKeybindsForWidget: (widgetImpl, widget) => widgetImpl.getCustomKeybinds ? widgetImpl.getCustomKeybinds(widget) : [],
+            setCustomEditorWidget: vi.fn()
+        });
+
+        const updated = onUpdate.mock.calls[0]?.[0] as WidgetItem[] | undefined;
+        expect(updated?.[1]?.metadata).toBeUndefined();
+        expect(updated?.[1]?.id).not.toBe('1');
+    });
+
     it('toggles raw value in normal mode for supported widgets', () => {
         const widgets: WidgetItem[] = [
             { id: '1', type: 'tokens-input' }
