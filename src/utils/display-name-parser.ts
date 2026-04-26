@@ -1,4 +1,4 @@
-export type ThinkingEffortLevel = 'low' | 'medium' | 'high';
+export type ThinkingEffortLevel = 'minimal' | 'low' | 'medium' | 'high';
 
 export interface ParsedDisplayName {
     thinkingEffort: ThinkingEffortLevel | null;
@@ -6,8 +6,23 @@ export interface ParsedDisplayName {
     multiplierValue: number | null;
 }
 
-const EFFORT_LEVELS = new Set<string>(['low', 'medium', 'high']);
+const EFFORT_LEVELS = new Set<string>(['minimal', 'low', 'medium', 'high']);
 const MULTIPLIER_REGEX = /^(\d+)x$/;
+const LABELED_EFFORT_REGEX = /^(?:thinking|reasoning|effort)(?:[-_ ](?:effort|level))?\s*[:=]\s*(minimal|low|medium|high)$/;
+
+export function normalizeThinkingEffort(value: string | null | undefined): ThinkingEffortLevel | null {
+    if (!value) {
+        return null;
+    }
+
+    const normalized = value.trim().toLowerCase();
+    if (EFFORT_LEVELS.has(normalized)) {
+        return normalized as ThinkingEffortLevel;
+    }
+
+    const match = LABELED_EFFORT_REGEX.exec(normalized);
+    return match?.[1] ? match[1] as ThinkingEffortLevel : null;
+}
 
 export function parseDisplayName(displayName: string | null | undefined): ParsedDisplayName {
     if (!displayName) {
@@ -31,9 +46,19 @@ export function parseDisplayName(displayName: string | null | undefined): Parsed
 
     // Search groups from last to first for effort (last matching group wins)
     for (let i = groups.length - 1; i >= 0; i--) {
-        const group = groups[i]?.toLowerCase();
-        if (group && EFFORT_LEVELS.has(group)) {
-            thinkingEffort = group as ThinkingEffortLevel;
+        const group = groups[i];
+        if (!group) {
+            continue;
+        }
+        const parts = group.split(/[,;|]/).map(part => part.trim());
+        for (let partIndex = parts.length - 1; partIndex >= 0; partIndex--) {
+            const effort = normalizeThinkingEffort(parts[partIndex]);
+            if (effort) {
+                thinkingEffort = effort;
+                break;
+            }
+        }
+        if (thinkingEffort) {
             break;
         }
     }
@@ -43,10 +68,16 @@ export function parseDisplayName(displayName: string | null | undefined): Parsed
         if (!group) {
             continue;
         }
-        const multMatch = MULTIPLIER_REGEX.exec(group);
-        if (multMatch?.[1]) {
-            multiplier = group;
-            multiplierValue = parseInt(multMatch[1], 10);
+        const parts = group.split(/[,;|]/).map(part => part.trim());
+        for (const part of parts) {
+            const multMatch = MULTIPLIER_REGEX.exec(part);
+            if (multMatch?.[1]) {
+                multiplier = part;
+                multiplierValue = parseInt(multMatch[1], 10);
+                break;
+            }
+        }
+        if (multiplier) {
             break;
         }
     }

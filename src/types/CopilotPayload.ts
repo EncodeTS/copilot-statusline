@@ -9,7 +9,10 @@ export const CopilotPayloadSchema = z.object({
     transcript_path: z.string().optional(),
     model: z.object({
         id: z.string().nullable().optional(),
-        display_name: z.string().nullable().optional()
+        display_name: z.string().nullable().optional(),
+        thinking_effort: z.string().nullable().optional(),
+        thinking_effort_level: z.string().nullable().optional(),
+        reasoning_effort: z.string().nullable().optional()
     }).optional(),
     workspace: z.object({ current_dir: z.string().optional() }).optional(),
     version: z.string().optional(),

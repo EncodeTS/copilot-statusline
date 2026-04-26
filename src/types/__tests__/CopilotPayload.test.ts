@@ -54,7 +54,11 @@ describe('CopilotPayloadSchema', () => {
             session_id: '39a86125-b571-455f-9237-1671d7aa4df9',
             session_name: null,
             transcript_path: '/Users/ts/.copilot/session-state/39a86125',
-            model: { id: 'claude-opus-4.6', display_name: 'claude-opus-4.6 (3x) (high)' },
+            model: {
+                id: 'claude-opus-4.6',
+                display_name: 'claude-opus-4.6 (3x) (high)',
+                thinking_effort_level: 'high'
+            },
             workspace: { current_dir: '/Users/ts/workspace' },
             version: '1.0.21',
             cost: {
@@ -84,6 +88,7 @@ describe('CopilotPayloadSchema', () => {
         if (result.success) {
             expect(result.data.model?.id).toBe('claude-opus-4.6');
             expect(result.data.model?.display_name).toBe('claude-opus-4.6 (3x) (high)');
+            expect(result.data.model?.thinking_effort_level).toBe('high');
             expect(result.data.context_window?.context_window_size).toBe(200000);
         }
     });

@@ -157,6 +157,21 @@ describe('ThinkingEffortWidget', () => {
         expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Thinking: high');
     });
 
+    it('renders explicit thinking effort from model payload', () => {
+        expect(widget.render(
+            item(),
+            ctx({
+                ...postTurnPayload,
+                model: {
+                    id: 'gpt-5',
+                    display_name: 'gpt-5',
+                    thinking_effort_level: 'minimal'
+                }
+            }),
+            settings
+        )).toBe('Thinking: minimal');
+    });
+
     it('returns null when display_name is null', () => {
         expect(widget.render(item(), ctx(startupPayload), settings)).toBeNull();
     });
