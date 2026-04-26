@@ -65,6 +65,10 @@ function getPickerCategories(widgetCategories: string[]): string[] {
 }
 
 function wrapIndex(index: number, length: number): number {
+    if (length === 0) {
+        return 0;
+    }
+
     if (index < 0) {
         return length - 1;
     }
@@ -402,12 +406,12 @@ export function handleNormalInputMode({
             return;
         }
         const cloneInsertPosition = selectedIndex + 1;
-        const newBg = getUniqueBackgroundColor?.(cloneInsertPosition);
+        const uniqueBackgroundColor = getUniqueBackgroundColor?.(cloneInsertPosition);
         const clone: WidgetItem = {
             ...source,
             id: generateGuid(),
             ...(source.metadata ? { metadata: { ...source.metadata } } : {}),
-            ...(newBg && { backgroundColor: newBg })
+            ...(uniqueBackgroundColor && { backgroundColor: uniqueBackgroundColor })
         };
         const newWidgets = [
             ...widgets.slice(0, cloneInsertPosition),
