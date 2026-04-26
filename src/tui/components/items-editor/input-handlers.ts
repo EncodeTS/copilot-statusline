@@ -4,6 +4,7 @@ import type {
     WidgetItem,
     WidgetItemType
 } from '../../../types/Widget';
+import { generateGuid } from '../../../utils/guid';
 import {
     filterWidgetCatalog,
     getWidget,
@@ -61,6 +62,26 @@ function setPickerState(
 
 function getPickerCategories(widgetCategories: string[]): string[] {
     return [...widgetCategories];
+}
+
+function wrapIndex(index: number, length: number): number {
+    if (length === 0) {
+        return -1;
+    }
+
+    if (index < 0) {
+        return length - 1;
+    }
+
+    if (index > length - 1) {
+        return 0;
+    }
+
+    return index;
+}
+
+function getAdjacentIndex(currentIndex: number, length: number, isForward: boolean): number {
+    return wrapIndex(currentIndex + (isForward ? 1 : -1), length);
 }
 
 export function normalizePickerState(
@@ -189,9 +210,7 @@ export function handlePickerInputMode({
                     currentIndex = 0;
                 }
 
-                const nextIndex = key.downArrow
-                    ? Math.min(topLevelSearchEntries.length - 1, currentIndex + 1)
-                    : Math.max(0, currentIndex - 1);
+                const nextIndex = getAdjacentIndex(currentIndex, topLevelSearchEntries.length, Boolean(key.downArrow));
                 const nextType = topLevelSearchEntries[nextIndex]?.type ?? null;
                 setPickerState(setWidgetPicker, normalizeState, prev => ({
                     ...prev,
@@ -207,9 +226,7 @@ export function handlePickerInputMode({
                     currentIndex = 0;
                 }
 
-                const nextIndex = key.downArrow
-                    ? Math.min(filteredCategories.length - 1, currentIndex + 1)
-                    : Math.max(0, currentIndex - 1);
+                const nextIndex = getAdjacentIndex(currentIndex, filteredCategories.length, Boolean(key.downArrow));
                 const nextCategory = filteredCategories[nextIndex] ?? null;
                 setPickerState(setWidgetPicker, normalizeState, prev => ({
                     ...prev,
@@ -261,9 +278,7 @@ export function handlePickerInputMode({
                 currentIndex = 0;
             }
 
-            const nextIndex = key.downArrow
-                ? Math.min(filteredWidgets.length - 1, currentIndex + 1)
-                : Math.max(0, currentIndex - 1);
+            const nextIndex = getAdjacentIndex(currentIndex, filteredWidgets.length, Boolean(key.downArrow));
             const nextType = filteredWidgets[nextIndex]?.type ?? null;
             setPickerState(setWidgetPicker, normalizeState, prev => ({
                 ...prev,
@@ -307,24 +322,26 @@ export function handleMoveInputMode({
     setSelectedIndex,
     setMoveMode
 }: HandleMoveInputModeArgs): void {
-    if (key.upArrow && selectedIndex > 0) {
+    if (key.upArrow && widgets.length > 1) {
         const newWidgets = [...widgets];
+        const targetIndex = getAdjacentIndex(selectedIndex, widgets.length, false);
         const temp = newWidgets[selectedIndex];
-        const prev = newWidgets[selectedIndex - 1];
+        const prev = newWidgets[targetIndex];
         if (temp && prev) {
-            [newWidgets[selectedIndex], newWidgets[selectedIndex - 1]] = [prev, temp];
+            [newWidgets[selectedIndex], newWidgets[targetIndex]] = [prev, temp];
         }
         onUpdate(newWidgets);
-        setSelectedIndex(selectedIndex - 1);
-    } else if (key.downArrow && selectedIndex < widgets.length - 1) {
+        setSelectedIndex(targetIndex);
+    } else if (key.downArrow && widgets.length > 1) {
         const newWidgets = [...widgets];
+        const targetIndex = getAdjacentIndex(selectedIndex, widgets.length, true);
         const temp = newWidgets[selectedIndex];
-        const next = newWidgets[selectedIndex + 1];
+        const next = newWidgets[targetIndex];
         if (temp && next) {
-            [newWidgets[selectedIndex], newWidgets[selectedIndex + 1]] = [next, temp];
+            [newWidgets[selectedIndex], newWidgets[targetIndex]] = [next, temp];
         }
         onUpdate(newWidgets);
-        setSelectedIndex(selectedIndex + 1);
+        setSelectedIndex(targetIndex);
     } else if (key.escape || key.return) {
         setMoveMode(false);
     }
@@ -344,6 +361,7 @@ export interface HandleNormalInputModeArgs {
     openWidgetPicker: (action: WidgetPickerAction) => void;
     getCustomKeybindsForWidget: (widgetImpl: Widget, widget: WidgetItem) => CustomKeybind[];
     setCustomEditorWidget: (state: CustomEditorWidgetState | null) => void;
+    getUniqueBackgroundColor?: (insertIndex: number) => string | undefined;
 }
 
 export function handleNormalInputMode({
@@ -359,12 +377,13 @@ export function handleNormalInputMode({
     setShowClearConfirm,
     openWidgetPicker,
     getCustomKeybindsForWidget,
-    setCustomEditorWidget
+    setCustomEditorWidget,
+    getUniqueBackgroundColor
 }: HandleNormalInputModeArgs): void {
     if (key.upArrow && widgets.length > 0) {
-        setSelectedIndex(Math.max(0, selectedIndex - 1));
+        setSelectedIndex(getAdjacentIndex(selectedIndex, widgets.length, false));
     } else if (key.downArrow && widgets.length > 0) {
-        setSelectedIndex(Math.min(widgets.length - 1, selectedIndex + 1));
+        setSelectedIndex(getAdjacentIndex(selectedIndex, widgets.length, true));
     } else if (key.leftArrow && widgets.length > 0) {
         openWidgetPicker('change');
     } else if (key.rightArrow && widgets.length > 0) {
@@ -381,6 +400,26 @@ export function handleNormalInputMode({
         if (selectedIndex >= newWidgets.length && selectedIndex > 0) {
             setSelectedIndex(selectedIndex - 1);
         }
+    } else if (input === 'k' && widgets.length > 0) {
+        const source = widgets[selectedIndex];
+        if (!source) {
+            return;
+        }
+        const cloneInsertPosition = selectedIndex + 1;
+        const uniqueBackgroundColor = getUniqueBackgroundColor?.(cloneInsertPosition);
+        const clone: WidgetItem = {
+            ...source,
+            id: generateGuid(),
+            ...(source.metadata ? { metadata: { ...source.metadata } } : {}),
+            ...(uniqueBackgroundColor && { backgroundColor: uniqueBackgroundColor })
+        };
+        const newWidgets = [
+            ...widgets.slice(0, cloneInsertPosition),
+            clone,
+            ...widgets.slice(cloneInsertPosition)
+        ];
+        onUpdate(newWidgets);
+        setSelectedIndex(cloneInsertPosition);
     } else if (input === 'c') {
         if (widgets.length > 0) {
             setShowClearConfirm(true);
