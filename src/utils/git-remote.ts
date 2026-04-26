@@ -195,9 +195,9 @@ export function buildRepoWebUrl(remote: RemoteInfo): string {
 }
 
 function getBranchWebPath(remote: RemoteInfo): string {
-    const host = remote.host.toLowerCase();
+    const host = remote.host.toLowerCase().replace(/:\d+$/, '');
 
-    if (host === 'gitlab.com' || host.startsWith('gitlab.') || host.includes('.gitlab.')) {
+    if (host === 'gitlab.com' || host.endsWith('.gitlab.com') || host.startsWith('gitlab.')) {
         return '/-/tree/';
     }
 
