@@ -175,8 +175,7 @@ export function listRemotes(context: RenderContext): string[] {
 }
 
 /**
- * Build a web URL for a repository on GitHub-like hosts.
- * Returns null if the host doesn't appear to be GitHub-like.
+ * Build a generic HTTPS web URL for a repository.
  */
 export function buildRepoWebUrl(remote: RemoteInfo): string {
     let webHost = remote.host;
