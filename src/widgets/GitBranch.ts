@@ -39,18 +39,14 @@ function isLinkEnabled(item: WidgetItem): boolean {
 
 function toggleLink(item: WidgetItem): WidgetItem {
     const nextEnabled = !isLinkEnabled(item);
-    const {
-        [LINK_KEY]: removedLink,
-        [LEGACY_LINK_KEY]: removedLegacyLink,
-        ...restMetadata
-    } = item.metadata ?? {};
+    const nextMetadata = Object.fromEntries(
+        Object.entries(item.metadata ?? {})
+            .filter(([key]) => key !== LINK_KEY && key !== LEGACY_LINK_KEY)
+    );
 
-    void removedLink;
-    void removedLegacyLink;
-
-    const nextMetadata = nextEnabled
-        ? { ...restMetadata, [LINK_KEY]: 'true' }
-        : restMetadata;
+    if (nextEnabled) {
+        nextMetadata[LINK_KEY] = 'true';
+    }
 
     return {
         ...item,

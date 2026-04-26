@@ -396,7 +396,7 @@ export function handleNormalInputMode({
         const clone: WidgetItem = {
             ...source,
             id: generateGuid(),
-            ...(source.metadata && { metadata: { ...source.metadata } }),
+            ...(source.metadata ? { metadata: { ...source.metadata } } : {}),
             ...(newBg && { backgroundColor: newBg })
         };
         const newWidgets = [
