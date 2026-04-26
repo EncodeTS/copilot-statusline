@@ -157,6 +157,83 @@ describe('ThinkingEffortWidget', () => {
         expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Thinking: high');
     });
 
+    it('renders explicit thinking effort from model payload', () => {
+        expect(widget.render(
+            item(),
+            ctx({
+                ...postTurnPayload,
+                model: {
+                    id: 'gpt-5',
+                    display_name: 'gpt-5',
+                    thinking_effort_level: 'minimal'
+                }
+            }),
+            settings
+        )).toBe('Thinking: minimal');
+    });
+
+    it('renders max thinking effort from model payload', () => {
+        expect(widget.render(
+            item(),
+            ctx({
+                ...postTurnPayload,
+                model: {
+                    id: 'gpt-5',
+                    display_name: 'gpt-5',
+                    thinking_effort_level: 'max'
+                }
+            }),
+            settings
+        )).toBe('Thinking: max');
+    });
+
+    it('renders thinking effort from thinking_effort field', () => {
+        expect(widget.render(
+            item(),
+            ctx({
+                ...postTurnPayload,
+                model: {
+                    id: 'gpt-5',
+                    display_name: 'gpt-5 (high)',
+                    thinking_effort: 'low'
+                }
+            }),
+            settings
+        )).toBe('Thinking: low');
+    });
+
+    it('renders thinking effort from reasoning_effort field', () => {
+        expect(widget.render(
+            item(),
+            ctx({
+                ...postTurnPayload,
+                model: {
+                    id: 'gpt-5',
+                    display_name: 'gpt-5 (high)',
+                    reasoning_effort: 'medium'
+                }
+            }),
+            settings
+        )).toBe('Thinking: medium');
+    });
+
+    it('prefers thinking_effort_level over other effort fields and display_name', () => {
+        expect(widget.render(
+            item(),
+            ctx({
+                ...postTurnPayload,
+                model: {
+                    id: 'gpt-5',
+                    display_name: 'gpt-5 (low)',
+                    thinking_effort_level: 'max',
+                    thinking_effort: 'minimal',
+                    reasoning_effort: 'medium'
+                }
+            }),
+            settings
+        )).toBe('Thinking: max');
+    });
+
     it('returns null when display_name is null', () => {
         expect(widget.render(item(), ctx(startupPayload), settings)).toBeNull();
     });

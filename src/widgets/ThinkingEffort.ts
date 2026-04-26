@@ -5,11 +5,14 @@ import type {
     WidgetEditorDisplay,
     WidgetItem
 } from '../types/Widget';
-import { parseDisplayName } from '../utils/display-name-parser';
+import {
+    normalizeThinkingEffort,
+    parseDisplayName
+} from '../utils/display-name-parser';
 
 export class ThinkingEffortWidget implements Widget {
     getDefaultColor(): string { return 'magenta'; }
-    getDescription(): string { return 'Displays the thinking effort level parsed from model.display_name (low, medium, high)'; }
+    getDescription(): string { return 'Displays the thinking effort level from the Copilot model payload'; }
     getDisplayName(): string { return 'Thinking Effort'; }
     getCategory(): string { return 'Core'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
@@ -21,9 +24,13 @@ export class ThinkingEffortWidget implements Widget {
             return item.rawValue ? 'high' : 'Thinking: high';
         }
 
-        const parsed = parseDisplayName(context.data?.model?.display_name);
-        if (parsed.thinkingEffort) {
-            return item.rawValue ? parsed.thinkingEffort : `Thinking: ${parsed.thinkingEffort}`;
+        const model = context.data?.model;
+        const thinkingEffort = normalizeThinkingEffort(model?.thinking_effort_level)
+            ?? normalizeThinkingEffort(model?.thinking_effort)
+            ?? normalizeThinkingEffort(model?.reasoning_effort)
+            ?? parseDisplayName(model?.display_name).thinkingEffort;
+        if (thinkingEffort) {
+            return item.rawValue ? thinkingEffort : `Thinking: ${thinkingEffort}`;
         }
         return null;
     }

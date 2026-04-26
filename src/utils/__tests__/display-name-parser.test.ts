@@ -34,6 +34,43 @@ describe('parseDisplayName', () => {
         expect(result.multiplier).toBeNull();
     });
 
+    it('parses minimal effort', () => {
+        const result = parseDisplayName('gpt-5 (minimal)');
+        expect(result.thinkingEffort).toBe('minimal');
+        expect(result.multiplier).toBeNull();
+    });
+
+    it('parses xhigh effort', () => {
+        const result = parseDisplayName('gpt-5 (xhigh)');
+        expect(result.thinkingEffort).toBe('xhigh');
+        expect(result.multiplier).toBeNull();
+    });
+
+    it('parses max effort', () => {
+        const result = parseDisplayName('gpt-5 (max)');
+        expect(result.thinkingEffort).toBe('max');
+        expect(result.multiplier).toBeNull();
+    });
+
+    it('parses labeled effort', () => {
+        const result = parseDisplayName('gpt-5 (3x) (thinking effort: high)');
+        expect(result.thinkingEffort).toBe('high');
+        expect(result.multiplier).toBe('3x');
+    });
+
+    it('parses labeled max effort', () => {
+        const result = parseDisplayName('gpt-5 (3x) (thinking effort: max)');
+        expect(result.thinkingEffort).toBe('max');
+        expect(result.multiplier).toBe('3x');
+    });
+
+    it('parses combined multiplier and effort group', () => {
+        const result = parseDisplayName('gpt-5 (3x, high)');
+        expect(result.thinkingEffort).toBe('high');
+        expect(result.multiplier).toBe('3x');
+        expect(result.multiplierValue).toBe(3);
+    });
+
     it('parses multiplier only — no effort', () => {
         const result = parseDisplayName('claude-opus-4.6 (6x)');
         expect(result.thinkingEffort).toBeNull();
