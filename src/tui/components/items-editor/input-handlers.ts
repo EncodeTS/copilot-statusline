@@ -391,8 +391,8 @@ export function handleNormalInputMode({
         if (!source) {
             return;
         }
-        const insertIndex = selectedIndex + 1;
-        const newBg = getUniqueBackgroundColor?.(insertIndex);
+        const cloneInsertPosition = selectedIndex + 1;
+        const newBg = getUniqueBackgroundColor?.(cloneInsertPosition);
         const clone: WidgetItem = {
             ...source,
             id: generateGuid(),
@@ -400,12 +400,12 @@ export function handleNormalInputMode({
             ...(newBg && { backgroundColor: newBg })
         };
         const newWidgets = [
-            ...widgets.slice(0, insertIndex),
+            ...widgets.slice(0, cloneInsertPosition),
             clone,
-            ...widgets.slice(insertIndex)
+            ...widgets.slice(cloneInsertPosition)
         ];
         onUpdate(newWidgets);
-        setSelectedIndex(insertIndex);
+        setSelectedIndex(cloneInsertPosition);
     } else if (input === 'c') {
         if (widgets.length > 0) {
             setShowClearConfirm(true);

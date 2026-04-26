@@ -57,5 +57,9 @@ describe('GitBranchWidget', () => {
         const updated = widget.handleEditorAction('toggle-link', item);
 
         expect(updated?.metadata).toBeUndefined();
+
+        const toggledBackOn = updated ? widget.handleEditorAction('toggle-link', updated) : null;
+
+        expect(toggledBackOn?.metadata).toEqual({ linkToRepo: 'true' });
     });
 });
