@@ -179,10 +179,31 @@ export function listRemotes(context: RenderContext): string[] {
  * Returns null if the host doesn't appear to be GitHub-like.
  */
 export function buildRepoWebUrl(remote: RemoteInfo): string {
+    let webHost = remote.host;
+
+    try {
+        const parsedUrl = new URL(remote.url);
+        if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+            webHost = parsedUrl.host;
+        }
+    } catch {
+        // Keep the parsed host for non-URL formats such as git@host:owner/repo.git.
+    }
+
     // Assume HTTPS for the web URL
-    return `https://${remote.host}/${remote.owner}/${remote.repo}`;
+    return `https://${webHost}/${remote.owner}/${remote.repo}`;
+}
+
+function getBranchWebPath(remote: RemoteInfo): string {
+    const host = remote.host.toLowerCase();
+
+    if (host === 'gitlab.com' || host.startsWith('gitlab.') || host.includes('.gitlab.')) {
+        return '/-/tree/';
+    }
+
+    return '/tree/';
 }
 
 export function buildBranchWebUrl(remote: RemoteInfo, encodedBranch: string): string {
-    return `${buildRepoWebUrl(remote)}/tree/${encodedBranch}`;
+    return `${buildRepoWebUrl(remote)}${getBranchWebPath(remote)}${encodedBranch}`;
 }

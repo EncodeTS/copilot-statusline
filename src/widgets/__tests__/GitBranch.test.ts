@@ -17,6 +17,16 @@ import { clearGitCache } from '../../utils/git';
 import { GitBranchWidget } from '../GitBranch';
 
 const tempDirs: string[] = [];
+const gitDescribe = isGitAvailable() ? describe : describe.skip;
+
+function isGitAvailable(): boolean {
+    try {
+        execFileSync('git', ['--version'], { stdio: 'ignore' });
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 function createRepo(remoteUrl: string): string {
     const dir = mkdtempSync(path.join(os.tmpdir(), 'copilot-statusline-git-branch-'));
@@ -34,7 +44,7 @@ afterEach(() => {
     }
 });
 
-describe('GitBranchWidget', () => {
+gitDescribe('GitBranchWidget', () => {
     it('links branches to GitLab-style remote web URLs', () => {
         const cwd = createRepo('git@gitlab.example.com:group/project.git');
         const widget = new GitBranchWidget();
@@ -45,7 +55,7 @@ describe('GitBranchWidget', () => {
             DEFAULT_SETTINGS
         );
 
-        expect(output).toBe('\x1b]8;;https://gitlab.example.com/group/project/tree/feature/demo\x1b\\⎇ feature/demo\x1b]8;;\x1b\\');
+        expect(output).toBe('\x1b]8;;https://gitlab.example.com/group/project/-/tree/feature/demo\x1b\\⎇ feature/demo\x1b]8;;\x1b\\');
     });
 
     it('reads legacy linkToGitHub metadata and toggles to linkToRepo', () => {

@@ -31,6 +31,13 @@ import { isMetadataFlagEnabled } from './shared/metadata';
 const LINK_KEY = 'linkToRepo';
 const LEGACY_LINK_KEY = 'linkToGitHub';
 const TOGGLE_LINK_ACTION = 'toggle-link';
+const PREVIEW_REMOTE = {
+    name: 'origin',
+    url: 'https://example.com/owner/repo.git',
+    host: 'example.com',
+    owner: 'owner',
+    repo: 'repo'
+};
 
 function isLinkEnabled(item: WidgetItem): boolean {
     return isMetadataFlagEnabled(item, LINK_KEY)
@@ -87,7 +94,7 @@ export class GitBranchWidget implements Widget {
 
         if (context.isPreview) {
             const text = item.rawValue ? 'main' : '⎇ main';
-            return isLink ? renderOsc8Link('https://github.com/owner/repo/tree/main', text) : text;
+            return isLink ? renderOsc8Link(buildBranchWebUrl(PREVIEW_REMOTE, 'main'), text) : text;
         }
 
         if (!isInsideGitWorkTree(context)) {

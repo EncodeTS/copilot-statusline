@@ -73,6 +73,10 @@ export function List<V = string | number>({
     }, [selectedIndex, selectedValue]);
 
     useInput((_, key) => {
+        if (selectableItems.length === 0) {
+            return;
+        }
+
         if (key.upArrow) {
             const prev = selectedIndex - 1;
             const prevIndex = prev < 0
