@@ -204,6 +204,91 @@ describe('items-editor input handlers', () => {
         expect(setMoveMode).not.toHaveBeenCalled();
     });
 
+    it('wraps selected widget movement at the top in move mode', () => {
+        const widgets: WidgetItem[] = [
+            { id: '1', type: 'tokens-input' },
+            { id: '2', type: 'tokens-output' }
+        ];
+        const onUpdate = vi.fn();
+        const setSelectedIndex = vi.fn();
+
+        handleMoveInputMode({
+            key: { upArrow: true },
+            widgets,
+            selectedIndex: 0,
+            onUpdate,
+            setSelectedIndex,
+            setMoveMode: vi.fn()
+        });
+
+        expect(onUpdate).toHaveBeenCalledWith([
+            { id: '2', type: 'tokens-output' },
+            { id: '1', type: 'tokens-input' }
+        ]);
+        expect(setSelectedIndex).toHaveBeenCalledWith(1);
+    });
+
+    it('wraps normal widget selection', () => {
+        const widgets: WidgetItem[] = [
+            { id: '1', type: 'tokens-input' },
+            { id: '2', type: 'tokens-output' }
+        ];
+        const setSelectedIndex = vi.fn();
+
+        handleNormalInputMode({
+            input: '',
+            key: { upArrow: true },
+            widgets,
+            selectedIndex: 0,
+            separatorChars: ['|', '-'],
+            onBack: vi.fn(),
+            onUpdate: vi.fn(),
+            setSelectedIndex,
+            setMoveMode: vi.fn(),
+            setShowClearConfirm: vi.fn(),
+            openWidgetPicker: vi.fn(),
+            getCustomKeybindsForWidget: (widgetImpl, widget) => widgetImpl.getCustomKeybinds ? widgetImpl.getCustomKeybinds(widget) : [],
+            setCustomEditorWidget: vi.fn()
+        });
+
+        expect(setSelectedIndex).toHaveBeenCalledWith(1);
+    });
+
+    it('clones selected widget after current selection', () => {
+        const widgets: WidgetItem[] = [
+            { id: '1', type: 'tokens-input', metadata: { sample: 'true' } },
+            { id: '2', type: 'tokens-output' }
+        ];
+        const onUpdate = vi.fn();
+        const setSelectedIndex = vi.fn();
+
+        handleNormalInputMode({
+            input: 'k',
+            key: {},
+            widgets,
+            selectedIndex: 0,
+            separatorChars: ['|', '-'],
+            onBack: vi.fn(),
+            onUpdate,
+            setSelectedIndex,
+            setMoveMode: vi.fn(),
+            setShowClearConfirm: vi.fn(),
+            openWidgetPicker: vi.fn(),
+            getCustomKeybindsForWidget: (widgetImpl, widget) => widgetImpl.getCustomKeybinds ? widgetImpl.getCustomKeybinds(widget) : [],
+            setCustomEditorWidget: vi.fn(),
+            getUniqueBackgroundColor: () => 'blue'
+        });
+
+        const updated = onUpdate.mock.calls[0]?.[0] as WidgetItem[] | undefined;
+        expect(updated).toHaveLength(3);
+        expect(updated?.[1]?.type).toBe('tokens-input');
+        expect(updated?.[1]?.id).not.toBe('1');
+        expect(updated?.[1]?.metadata).toEqual({ sample: 'true' });
+        expect(updated?.[1]?.metadata).not.toBe(widgets[0]?.metadata);
+        expect(updated?.[1]?.backgroundColor).toBe('blue');
+        expect(setSelectedIndex).toHaveBeenCalledWith(1);
+    });
+
     it('toggles raw value in normal mode for supported widgets', () => {
         const widgets: WidgetItem[] = [
             { id: '1', type: 'tokens-input' }

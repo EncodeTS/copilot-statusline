@@ -26,9 +26,7 @@ import {
     handleToggleNoGitAction,
     isHideNoGitEnabled
 } from './shared/git-no-git';
-import {
-    isMetadataFlagEnabled
-} from './shared/metadata';
+import { isMetadataFlagEnabled } from './shared/metadata';
 
 const LINK_KEY = 'linkToRepo';
 const LEGACY_LINK_KEY = 'linkToGitHub';
