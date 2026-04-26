@@ -182,3 +182,7 @@ export function buildRepoWebUrl(remote: RemoteInfo): string {
     // Assume HTTPS for the web URL
     return `https://${remote.host}/${remote.owner}/${remote.repo}`;
 }
+
+export function buildBranchWebUrl(remote: RemoteInfo, encodedBranch: string): string {
+    return `${buildRepoWebUrl(remote)}/tree/${encodedBranch}`;
+}
