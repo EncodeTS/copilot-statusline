@@ -197,8 +197,9 @@ export function buildRepoWebUrl(remote: RemoteInfo): string {
 function getBranchWebPath(remote: RemoteInfo): string {
     const host = remote.host.toLowerCase().replace(/:\d+$/, '');
 
-    // Only canonical GitLab SaaS hosts are detectable from the remote URL alone.
-    // Self-hosted GitLab instances on arbitrary domains fall back to generic /tree/ links.
+    // Self-hosted GitLab instances on arbitrary domains cannot be reliably
+    // detected from the remote URL alone and will use the generic /tree/ path
+    // instead of GitLab's /-/tree/ path.
     if (host === 'gitlab.com' || /^[^.]+\.gitlab\.com$/.test(host)) {
         return '/-/tree/';
     }

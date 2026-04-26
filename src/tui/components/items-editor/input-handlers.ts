@@ -66,7 +66,7 @@ function getPickerCategories(widgetCategories: string[]): string[] {
 
 function wrapIndex(index: number, length: number): number {
     if (length === 0) {
-        return 0;
+        return -1;
     }
 
     if (index < 0) {
