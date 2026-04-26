@@ -1,4 +1,6 @@
-export type ThinkingEffortLevel = 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+const THINKING_EFFORT_LEVELS = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
+
+export type ThinkingEffortLevel = typeof THINKING_EFFORT_LEVELS[number];
 
 export interface ParsedDisplayName {
     thinkingEffort: ThinkingEffortLevel | null;
@@ -6,9 +8,10 @@ export interface ParsedDisplayName {
     multiplierValue: number | null;
 }
 
-const EFFORT_LEVELS = new Set<string>(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+const EFFORT_LEVELS: ReadonlySet<string> = new Set(THINKING_EFFORT_LEVELS);
+const EFFORT_LEVEL_PATTERN = THINKING_EFFORT_LEVELS.join('|');
 const MULTIPLIER_REGEX = /^(\d+)x$/;
-const LABELED_EFFORT_REGEX = /^(?:thinking|reasoning|effort)(?:[-_ ](?:effort|level))?\s*[:=]\s*(minimal|low|medium|high|xhigh|max)$/;
+const LABELED_EFFORT_REGEX = new RegExp(`^(?:thinking|reasoning|effort)(?:[-_ ](?:effort|level))?\\s*[:=]\\s*(${EFFORT_LEVEL_PATTERN})$`);
 
 export function normalizeThinkingEffort(value: string | null | undefined): ThinkingEffortLevel | null {
     if (!value) {
