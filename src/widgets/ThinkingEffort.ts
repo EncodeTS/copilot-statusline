@@ -7,7 +7,8 @@ import type {
 } from '../types/Widget';
 import {
     normalizeThinkingEffort,
-    parseDisplayName
+    parseDisplayName,
+    trustThinkingEffort
 } from '../utils/display-name-parser';
 
 export class ThinkingEffortWidget implements Widget {
@@ -25,7 +26,7 @@ export class ThinkingEffortWidget implements Widget {
         }
 
         const model = context.data?.model;
-        const thinkingEffort = normalizeThinkingEffort(model?.thinking_effort_level)
+        const thinkingEffort = trustThinkingEffort(model?.thinking_effort_level)
             ?? normalizeThinkingEffort(model?.thinking_effort)
             ?? normalizeThinkingEffort(model?.reasoning_effort)
             ?? parseDisplayName(model?.display_name).thinkingEffort;

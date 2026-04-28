@@ -4,7 +4,25 @@ import {
     it
 } from 'vitest';
 
-import { parseDisplayName } from '../display-name-parser';
+import {
+    parseDisplayName,
+    trustThinkingEffort
+} from '../display-name-parser';
+
+describe('trustThinkingEffort', () => {
+    it('returns the value as-is (lowercased)', () => {
+        expect(trustThinkingEffort('Extrahigh')).toBe('extrahigh');
+        expect(trustThinkingEffort('  XHIGH  ')).toBe('xhigh');
+        expect(trustThinkingEffort('any-future-level')).toBe('any-future-level');
+    });
+
+    it('returns null for empty / nullish', () => {
+        expect(trustThinkingEffort(null)).toBeNull();
+        expect(trustThinkingEffort(undefined)).toBeNull();
+        expect(trustThinkingEffort('')).toBeNull();
+        expect(trustThinkingEffort('   ')).toBeNull();
+    });
+});
 
 describe('parseDisplayName', () => {
     it('parses "claude-opus-4.6 (3x) (high)"', () => {

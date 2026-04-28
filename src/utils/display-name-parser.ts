@@ -27,12 +27,22 @@ export function normalizeThinkingEffort(value: string | null | undefined): Think
     return match?.[1] ? match[1] as ThinkingEffortLevel : null;
 }
 
+// Trust the value as-is (only trim + lowercase). Use for fields that the
+// upstream payload dedicates to effort, like `model.thinking_effort_level` —
+// no whitelist, so new levels added by Copilot show up without a code change.
+export function trustThinkingEffort(value: string | null | undefined): string | null {
+    if (!value) {
+        return null;
+    }
+    const normalized = value.trim().toLowerCase();
+    return normalized || null;
+}
+
 export function parseDisplayName(displayName: string | null | undefined): ParsedDisplayName {
     if (!displayName) {
         return { thinkingEffort: null, multiplier: null, multiplierValue: null };
     }
 
-    // Extract all parenthesized groups
     const groups: string[] = [];
     const groupRegex = /\(([^)]+)\)/g;
     let match: RegExpExecArray | null;
@@ -47,7 +57,6 @@ export function parseDisplayName(displayName: string | null | undefined): Parsed
     let multiplier: string | null = null;
     let multiplierValue: number | null = null;
 
-    // Search groups from last to first for effort (last matching group wins)
     for (let i = groups.length - 1; i >= 0; i--) {
         const group = groups[i];
         if (!group) {
@@ -66,7 +75,6 @@ export function parseDisplayName(displayName: string | null | undefined): Parsed
         }
     }
 
-    // Search groups for multiplier
     for (const group of groups) {
         if (!group) {
             continue;
