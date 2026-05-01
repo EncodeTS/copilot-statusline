@@ -41,6 +41,8 @@ export { GitUpstreamOwnerWidget } from './GitUpstreamOwner';
 export { GitUpstreamRepoWidget } from './GitUpstreamRepo';
 export { GitUpstreamOwnerRepoWidget } from './GitUpstreamOwnerRepo';
 export { GitIsForkWidget } from './GitIsFork';
+export { GitWorktreeWidget } from './GitWorktree';
+export { GitWorktreeModeWidget } from './GitWorktreeMode';
 export { CurrentWorkingDirWidget } from './CurrentWorkingDir';
 export { TerminalWidthWidget } from './TerminalWidth';
 export { FreeMemoryWidget } from './FreeMemory';
