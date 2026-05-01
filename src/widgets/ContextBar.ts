@@ -64,8 +64,8 @@ export class ContextBarWidget implements Widget {
 
         const contextWindowMetrics = getContextWindowMetrics(context.data);
 
-        const total = contextWindowMetrics.windowSize;
-        const used = contextWindowMetrics.contextLengthTokens;
+        const total = contextWindowMetrics.displayedContextLimit ?? contextWindowMetrics.windowSize;
+        const used = contextWindowMetrics.currentContextTokens;
 
         if (used === null || total === null || total <= 0) {
             return null;

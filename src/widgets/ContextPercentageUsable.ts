@@ -7,7 +7,6 @@ import type {
     WidgetItem
 } from '../types/Widget';
 import { getContextWindowMetrics } from '../utils/context-window';
-import { getContextConfig } from '../utils/model-context';
 
 import {
     getContextInverseModifierText,
@@ -18,7 +17,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class ContextPercentageUsableWidget implements Widget {
     getDefaultColor(): string { return 'blue'; }
-    getDescription(): string { return 'Shows percentage of usable context window used or remaining (80% of total)'; }
+    getDescription(): string { return 'Shows percentage of usable context (current_context_tokens / displayed_context_limit)'; }
     getDisplayName(): string { return 'Context % (Usable)'; }
     getCategory(): string { return 'Context'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
@@ -41,9 +40,8 @@ export class ContextPercentageUsableWidget implements Widget {
         }
 
         const metrics = getContextWindowMetrics(context.data);
-        if (metrics.usedTokens !== null && metrics.windowSize !== null) {
-            const contextConfig = getContextConfig(metrics.windowSize);
-            const usablePercent = Math.min(100, (metrics.usedTokens / contextConfig.usableTokens) * 100);
+        if (metrics.currentContextTokens !== null && metrics.displayedContextLimit !== null && metrics.displayedContextLimit > 0) {
+            const usablePercent = Math.min(100, (metrics.currentContextTokens / metrics.displayedContextLimit) * 100);
             const displayPercentage = isInverse ? (100 - usablePercent) : usablePercent;
             return formatRawOrLabeledValue(item, 'Usable: ', `${displayPercentage.toFixed(1)}%`);
         }

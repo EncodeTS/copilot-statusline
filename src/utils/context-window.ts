@@ -2,14 +2,18 @@ import type { CopilotPayload } from '../types/CopilotPayload';
 
 export interface ContextWindowMetrics {
     windowSize: number | null;
+    displayedContextLimit: number | null;
     usedTokens: number | null;
     contextLengthTokens: number | null;
+    currentContextTokens: number | null;
+    currentContextUsedPercentage: number | null;
     usedPercentage: number | null;
     remainingPercentage: number | null;
     totalInputTokens: number | null;
     totalOutputTokens: number | null;
     cachedTokens: number | null;
     totalTokens: number | null;
+    reasoningTokens: number | null;
     remainingTokens: number | null;
     lastCallInputTokens: number | null;
     lastCallOutputTokens: number | null;
@@ -34,14 +38,18 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
 
     const empty: ContextWindowMetrics = {
         windowSize: null,
+        displayedContextLimit: null,
         usedTokens: null,
         contextLengthTokens: null,
+        currentContextTokens: null,
+        currentContextUsedPercentage: null,
         usedPercentage: null,
         remainingPercentage: null,
         totalInputTokens: null,
         totalOutputTokens: null,
         cachedTokens: null,
         totalTokens: null,
+        reasoningTokens: null,
         remainingTokens: null,
         lastCallInputTokens: null,
         lastCallOutputTokens: null,
@@ -55,6 +63,12 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
 
     const rawWindowSize = toFiniteNonNegativeNumber(contextWindow.context_window_size);
     const windowSize = rawWindowSize !== null && rawWindowSize > 0 ? rawWindowSize : null;
+    const rawDisplayedLimit = toFiniteNonNegativeNumber(contextWindow.displayed_context_limit);
+    const displayedContextLimit = rawDisplayedLimit !== null && rawDisplayedLimit > 0 ? rawDisplayedLimit : null;
+    const currentContextTokens = toFiniteNonNegativeNumber(contextWindow.current_context_tokens);
+    const rawCurrentPct = toFiniteNonNegativeNumber(contextWindow.current_context_used_percentage);
+    const currentContextUsedPercentage = rawCurrentPct !== null ? clampPercentage(rawCurrentPct) : null;
+    const reasoningTokens = toFiniteNonNegativeNumber(contextWindow.total_reasoning_tokens);
     const totalInputTokens = toFiniteNonNegativeNumber(contextWindow.total_input_tokens);
     const totalOutputTokens = toFiniteNonNegativeNumber(contextWindow.total_output_tokens);
     const cacheReadTokens = toFiniteNonNegativeNumber(contextWindow.total_cache_read_tokens);
@@ -122,14 +136,18 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
 
     return {
         windowSize,
+        displayedContextLimit,
         usedTokens,
         contextLengthTokens: contextLengthFromAuthoritative ?? contextLengthTokens ?? usedTokens,
+        currentContextTokens,
+        currentContextUsedPercentage,
         usedPercentage,
         remainingPercentage,
         totalInputTokens,
         totalOutputTokens,
         cachedTokens,
         totalTokens,
+        reasoningTokens,
         remainingTokens,
         lastCallInputTokens,
         lastCallOutputTokens,

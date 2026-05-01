@@ -12,7 +12,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class RemainingTokensWidget implements Widget {
     getDefaultColor(): string { return 'brightBlack'; }
-    getDescription(): string { return 'Shows absolute remaining context tokens'; }
+    getDescription(): string { return 'Shows remaining tokens in current context (displayed_context_limit − current_context_tokens)'; }
     getDisplayName(): string { return 'Remaining Tokens'; }
     getCategory(): string { return 'Context'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
@@ -25,8 +25,10 @@ export class RemainingTokensWidget implements Widget {
         }
 
         const metrics = getContextWindowMetrics(context.data);
-        if (metrics.remainingTokens !== null) {
-            return formatRawOrLabeledValue(item, 'Remaining: ', formatTokens(metrics.remainingTokens));
+        const limit = metrics.displayedContextLimit ?? metrics.windowSize;
+        if (limit !== null && metrics.currentContextTokens !== null) {
+            const remaining = Math.max(0, limit - metrics.currentContextTokens);
+            return formatRawOrLabeledValue(item, 'Remaining: ', formatTokens(remaining));
         }
         return null;
     }

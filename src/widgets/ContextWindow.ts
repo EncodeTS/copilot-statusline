@@ -10,27 +10,28 @@ import { formatTokens } from '../utils/format-tokens';
 
 import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
-export class ContextLengthWidget implements Widget {
+export class ContextWindowWidget implements Widget {
     getDefaultColor(): string { return 'brightBlack'; }
-    getDescription(): string { return 'Shows current context length in tokens (live)'; }
-    getDisplayName(): string { return 'Context Length'; }
+    getDescription(): string { return 'Shows the model\'s context window size (max tokens)'; }
+    getDisplayName(): string { return 'Context Window'; }
     getCategory(): string { return 'Context'; }
-    getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
+    getEditorDisplay(_item: WidgetItem): WidgetEditorDisplay {
         return { displayText: this.getDisplayName() };
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
+    render(item: WidgetItem, context: RenderContext, _settings: Settings): string | null {
         if (context.isPreview) {
-            return formatRawOrLabeledValue(item, 'Ctx: ', '33k');
+            return formatRawOrLabeledValue(item, 'Window: ', '1000k');
         }
 
         const metrics = getContextWindowMetrics(context.data);
-        if (metrics.currentContextTokens !== null) {
-            return formatRawOrLabeledValue(item, 'Ctx: ', formatTokens(metrics.currentContextTokens));
+        const size = metrics.displayedContextLimit ?? metrics.windowSize;
+        if (size !== null) {
+            return formatRawOrLabeledValue(item, 'Window: ', formatTokens(size));
         }
         return null;
     }
 
     supportsRawValue(): boolean { return true; }
-    supportsColors(item: WidgetItem): boolean { return true; }
+    supportsColors(_item: WidgetItem): boolean { return true; }
 }

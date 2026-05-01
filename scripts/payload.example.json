@@ -1,1 +1,47 @@
-{"cwd":"/Users/ts/workspace/active/statusline","session_id":"39a86125-b571-455f-9237-1671d7aa4df9","session_name":"Say Hello","transcript_path":"/Users/ts/.copilot/session-state/39a86125-b571-455f-9237-1671d7aa4df9","model":{"id":"claude-opus-4.6","display_name":"claude-opus-4.6 (3x) (high)"},"workspace":{"current_dir":"/Users/ts/workspace/active/statusline"},"version":"1.0.21","cost":{"total_api_duration_ms":1696,"total_lines_added":0,"total_lines_removed":0,"total_duration_ms":39619,"total_premium_requests":3},"context_window":{"total_input_tokens":35204,"total_output_tokens":16,"total_cache_read_tokens":0,"total_cache_write_tokens":0,"total_tokens":35220,"context_window_size":200000,"used_percentage":18,"remaining_percentage":82,"remaining_tokens":164780,"last_call_input_tokens":35204,"last_call_output_tokens":16,"current_usage":{"input_tokens":35204,"output_tokens":16,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{
+  "cwd": "/Users/example/workspace/project",
+  "session_id": "00000000-0000-0000-0000-000000000000",
+  "session_name": "Example Session",
+  "transcript_path": "/Users/example/.copilot/session-state/00000000-0000-0000-0000-000000000000",
+  "model": {
+    "id": "claude-opus-4.7-1m-internal",
+    "display_name": "Claude Opus 4.7 (1M context)(Internal only) (10x) (xhigh)"
+  },
+  "workspace": {
+    "current_dir": "/Users/example/workspace/project"
+  },
+  "remote": {
+    "connected": false
+  },
+  "version": "1.0.40-3",
+  "cost": {
+    "total_api_duration_ms": 4280,
+    "total_lines_added": 0,
+    "total_lines_removed": 0,
+    "total_duration_ms": 61202,
+    "total_premium_requests": 10
+  },
+  "context_window": {
+    "total_input_tokens": 43954,
+    "total_output_tokens": 15,
+    "total_cache_read_tokens": 23292,
+    "total_cache_write_tokens": 20656,
+    "total_reasoning_tokens": 0,
+    "total_tokens": 43969,
+    "context_window_size": 1000000,
+    "used_percentage": 4,
+    "remaining_percentage": 96,
+    "remaining_tokens": 956031,
+    "last_call_input_tokens": 43954,
+    "last_call_output_tokens": 15,
+    "current_context_tokens": 33205,
+    "displayed_context_limit": 1000000,
+    "current_context_used_percentage": 3,
+    "current_usage": {
+      "input_tokens": 43954,
+      "output_tokens": 15,
+      "cache_creation_input_tokens": 20656,
+      "cache_read_input_tokens": 23292
+    }
+  }
+}

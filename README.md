@@ -24,6 +24,8 @@
 
 > **Based on [ccstatusline](https://github.com/sirmalloc/ccstatusline)** by [@sirmalloc](https://github.com/sirmalloc) — the excellent customizable statusline for Claude Code CLI. This project adapts its architecture, TUI, and rendering engine for the GitHub Copilot CLI payload format. Huge thanks to Matthew Breedlove for the original work.
 
+> **Requirements:** GitHub Copilot CLI **≥ 1.0.35** for live context widgets (`Context %`, `Context Bar`, `Context Length`, `Remaining Tokens`). Older versions miss the underlying `current_context_tokens` / `displayed_context_limit` fields and these widgets render blank.
+
 ---
 
 ## 📚 Table of Contents

@@ -15,6 +15,7 @@ export const CopilotPayloadSchema = z.object({
         reasoning_effort: z.string().nullable().optional()
     }).optional(),
     workspace: z.object({ current_dir: z.string().optional() }).optional(),
+    remote: z.object({ connected: z.boolean().optional() }).optional(),
     version: z.string().optional(),
     cost: z.object({
         total_api_duration_ms: z.number().optional(),
@@ -29,12 +30,16 @@ export const CopilotPayloadSchema = z.object({
         total_output_tokens: z.number().optional(),
         total_cache_read_tokens: z.number().optional(),
         total_cache_write_tokens: z.number().optional(),
+        total_reasoning_tokens: z.number().optional(),
         total_tokens: z.number().optional(),
         used_percentage: OptionalNumber,
         remaining_percentage: OptionalNumber,
         remaining_tokens: OptionalNumber,
         last_call_input_tokens: z.number().optional(),
         last_call_output_tokens: z.number().optional(),
+        current_context_tokens: OptionalNumber,
+        current_context_used_percentage: OptionalNumber,
+        displayed_context_limit: OptionalNumber,
         current_usage: z.object({
             input_tokens: z.number().optional(),
             output_tokens: z.number().optional(),

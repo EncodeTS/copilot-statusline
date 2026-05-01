@@ -40,8 +40,9 @@ export class ContextPercentageWidget implements Widget {
         }
 
         const metrics = getContextWindowMetrics(context.data);
-        if (metrics.usedPercentage !== null) {
-            const displayPercentage = isInverse ? (100 - metrics.usedPercentage) : metrics.usedPercentage;
+        if (metrics.currentContextUsedPercentage !== null) {
+            const pct = metrics.currentContextUsedPercentage;
+            const displayPercentage = isInverse ? (100 - pct) : pct;
             return formatRawOrLabeledValue(item, 'Ctx: ', `${displayPercentage.toFixed(1)}%`);
         }
 

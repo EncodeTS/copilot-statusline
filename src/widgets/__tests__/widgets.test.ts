@@ -59,8 +59,12 @@ const postTurnPayload: CopilotPayload = {
         total_output_tokens: 16,
         total_cache_read_tokens: 500,
         total_cache_write_tokens: 300,
+        total_reasoning_tokens: 0,
         total_tokens: 35220,
         context_window_size: 200000,
+        displayed_context_limit: 200000,
+        current_context_tokens: 36000,
+        current_context_used_percentage: 18,
         used_percentage: 18,
         remaining_percentage: 82,
         remaining_tokens: 164780,
@@ -282,11 +286,11 @@ describe('TokensTotalWidget', () => {
 describe('ContextLengthWidget', () => {
     const widget = new ContextLengthWidget();
 
-    it('renders context window size', () => {
-        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Ctx: 200.0k');
+    it('renders current context tokens', () => {
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Ctx: 36.0k');
     });
 
-    it('returns null when context_window_size is null', () => {
+    it('returns null when current_context_tokens is null', () => {
         expect(widget.render(item(), ctx(startupPayload), settings)).toBeNull();
     });
 });
@@ -380,8 +384,9 @@ describe('LastCallOutputWidget', () => {
 describe('RemainingTokensWidget', () => {
     const widget = new RemainingTokensWidget();
 
-    it('renders remaining tokens', () => {
-        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Remaining: 164.8k');
+    it('renders remaining tokens (displayed_context_limit - current_context_tokens)', () => {
+        // 200000 - 36000 = 164000
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Remaining: 164.0k');
     });
 });
 
