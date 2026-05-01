@@ -12,7 +12,6 @@ export { TokensTotalWidget } from './TokensTotal';
 export { ContextLengthWidget } from './ContextLength';
 export { ContextWindowWidget } from './ContextWindow';
 export { ContextPercentageWidget } from './ContextPercentage';
-export { ContextPercentageUsableWidget } from './ContextPercentageUsable';
 export { ContextBarWidget } from './ContextBar';
 export { SessionClockWidget } from './SessionClock';
 export { PremiumRequestsWidget } from './PremiumRequests';

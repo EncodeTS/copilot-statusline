@@ -276,7 +276,7 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 |--------|------|-------------|
 | Context Length | `context-length` | Context window size |
 | Context % | `context-percentage` | Percentage of context window used or remaining |
-| Context % (Usable) | `context-percentage-usable` | Percentage of usable context (80% of max) |
+| Context % | `context-percentage` | Live context % from Copilot (`current_context_used_percentage`) |
 | Context Bar | `context-bar` | Visual progress bar for context usage |
 | Remaining Tokens | `remaining-tokens` | Absolute remaining context tokens |
 

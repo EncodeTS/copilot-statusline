@@ -66,13 +66,13 @@ export class ContextBarWidget implements Widget {
 
         const total = contextWindowMetrics.displayedContextLimit ?? contextWindowMetrics.windowSize;
         const used = contextWindowMetrics.currentContextTokens;
+        const upstreamPct = contextWindowMetrics.currentContextUsedPercentage;
 
-        if (used === null || total === null || total <= 0) {
+        if (used === null || total === null || total <= 0 || upstreamPct === null) {
             return null;
         }
 
-        const percent = (used / total) * 100;
-        const clampedPercent = Math.max(0, Math.min(100, percent));
+        const clampedPercent = Math.max(0, Math.min(100, upstreamPct));
 
         const usedK = Math.round(used / 1000);
         const totalK = Math.round(total / 1000);

@@ -11,8 +11,8 @@ describe('getContextWindowMetrics', () => {
     it('returns nulls for undefined data', () => {
         const result = getContextWindowMetrics(undefined);
         expect(result.windowSize).toBeNull();
-        expect(result.usedPercentage).toBeNull();
-        expect(result.totalInputTokens).toBeNull();
+        expect(result.currentContextTokens).toBeNull();
+        expect(result.currentContextUsedPercentage).toBeNull();
     });
 
     it('returns nulls for empty context_window', () => {
@@ -30,9 +30,6 @@ describe('getContextWindowMetrics', () => {
                 total_cache_read_tokens: 0,
                 total_cache_write_tokens: 0,
                 total_tokens: 0,
-                used_percentage: null,
-                remaining_percentage: null,
-                remaining_tokens: null,
                 last_call_input_tokens: 0,
                 last_call_output_tokens: 0
             }
@@ -40,122 +37,92 @@ describe('getContextWindowMetrics', () => {
 
         const result = getContextWindowMetrics(data);
         expect(result.windowSize).toBeNull();
-        expect(result.usedPercentage).toBeNull();
+        expect(result.currentContextUsedPercentage).toBeNull();
         expect(result.totalInputTokens).toBe(0);
     });
 
-    it('parses a model-ready payload', () => {
-        const data: CopilotPayload = {
-            context_window: {
-                context_window_size: 200000,
-                total_input_tokens: 0,
-                total_output_tokens: 0,
-                total_cache_read_tokens: 0,
-                total_cache_write_tokens: 0,
-                total_tokens: 0,
-                used_percentage: 0,
-                remaining_percentage: 100,
-                remaining_tokens: 200000,
-                last_call_input_tokens: 0,
-                last_call_output_tokens: 0
-            }
-        };
-
-        const result = getContextWindowMetrics(data);
-        expect(result.windowSize).toBe(200000);
-        expect(result.usedPercentage).toBe(0);
-        expect(result.remainingPercentage).toBe(100);
-        expect(result.remainingTokens).toBe(200000);
-    });
-
-    it('parses a post-turn payload with current_usage', () => {
-        const data: CopilotPayload = {
-            context_window: {
-                context_window_size: 200000,
-                total_input_tokens: 35204,
-                total_output_tokens: 16,
-                total_cache_read_tokens: 0,
-                total_cache_write_tokens: 0,
-                total_tokens: 35220,
-                used_percentage: 18,
-                remaining_percentage: 82,
-                remaining_tokens: 164780,
-                last_call_input_tokens: 35204,
-                last_call_output_tokens: 16,
-                current_usage: {
-                    input_tokens: 35204,
-                    output_tokens: 16,
-                    cache_creation_input_tokens: 0,
-                    cache_read_input_tokens: 0
-                }
-            }
-        };
-
-        const result = getContextWindowMetrics(data);
-        expect(result.windowSize).toBe(200000);
-        expect(result.usedPercentage).toBe(18);
-        expect(result.totalInputTokens).toBe(35204);
-        expect(result.totalOutputTokens).toBe(16);
-        expect(result.lastCallInputTokens).toBe(35204);
-        expect(result.lastCallOutputTokens).toBe(16);
-        expect(result.remainingTokens).toBe(164780);
-        expect(result.cacheReadTokens).toBe(0);
-        expect(result.cacheWriteTokens).toBe(0);
-        // usedTokens/contextLengthTokens derived from remaining_tokens
-        expect(result.usedTokens).toBe(200000 - 164780);
-        expect(result.contextLengthTokens).toBe(200000 - 164780);
-    });
-
-    it('derives usedTokens from remaining_tokens, not cumulative current_usage', () => {
-        // Simulates a long session with heavy caching where current_usage sums
-        // far exceed the context window (cumulative across all API calls)
+    it('exposes current_context_tokens and current_context_used_percentage from payload', () => {
         const data: CopilotPayload = {
             context_window: {
                 context_window_size: 1000000,
-                total_input_tokens: 3100000,
-                total_output_tokens: 22400,
-                total_cache_read_tokens: 2800000,
-                total_cache_write_tokens: 0,
-                total_tokens: 3122400,
-                used_percentage: 75,
-                remaining_percentage: 25,
-                remaining_tokens: 250000,
-                last_call_input_tokens: 50000,
-                last_call_output_tokens: 1200,
-                current_usage: {
-                    input_tokens: 3100000,
-                    output_tokens: 22400,
-                    cache_creation_input_tokens: 0,
-                    cache_read_input_tokens: 2800000
-                }
+                displayed_context_limit: 1000000,
+                current_context_tokens: 33205,
+                current_context_used_percentage: 3,
+                total_input_tokens: 43954,
+                total_output_tokens: 15,
+                total_tokens: 43969
             }
         };
 
         const result = getContextWindowMetrics(data);
         expect(result.windowSize).toBe(1000000);
-        // usedTokens should be derived from remaining_tokens, NOT current_usage sums
-        expect(result.usedTokens).toBe(750000); // 1000000 - 250000
-        expect(result.contextLengthTokens).toBe(750000);
-        expect(result.usedPercentage).toBe(75);
-        expect(result.remainingPercentage).toBe(25);
-        // totalTokens should still use current_usage sum (it IS cumulative)
-        expect(result.totalTokens).toBe(3100000 + 22400 + 2800000);
+        expect(result.displayedContextLimit).toBe(1000000);
+        expect(result.currentContextTokens).toBe(33205);
+        expect(result.currentContextUsedPercentage).toBe(3);
     });
 
-    it('falls back to used_percentage when remaining_tokens is absent', () => {
+    it('exposes displayed_context_limit when it differs from context_window_size (e.g. gpt-5.5)', () => {
         const data: CopilotPayload = {
             context_window: {
-                context_window_size: 200000,
-                total_input_tokens: 50000,
-                total_output_tokens: 5000,
-                used_percentage: 30,
-                remaining_percentage: 70
+                context_window_size: 400000,
+                displayed_context_limit: 304000,
+                current_context_tokens: 27805,
+                current_context_used_percentage: 9
             }
         };
 
         const result = getContextWindowMetrics(data);
-        expect(result.usedTokens).toBe(60000); // 30% of 200000
-        expect(result.contextLengthTokens).toBe(60000);
-        expect(result.usedPercentage).toBe(30);
+        expect(result.windowSize).toBe(400000);
+        expect(result.displayedContextLimit).toBe(304000);
+    });
+
+    it('clamps current_context_used_percentage at 100 (overflow case)', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                context_window_size: 400000,
+                displayed_context_limit: 304000,
+                current_context_tokens: 453076,
+                current_context_used_percentage: 100
+            }
+        };
+
+        const result = getContextWindowMetrics(data);
+        expect(result.currentContextUsedPercentage).toBe(100);
+    });
+
+    it('exposes reasoning, last-call, and cache token counts', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                context_window_size: 200000,
+                total_input_tokens: 35204,
+                total_output_tokens: 16,
+                total_cache_read_tokens: 500,
+                total_cache_write_tokens: 300,
+                total_reasoning_tokens: 1024,
+                total_tokens: 35220,
+                last_call_input_tokens: 35204,
+                last_call_output_tokens: 16
+            }
+        };
+
+        const result = getContextWindowMetrics(data);
+        expect(result.cacheReadTokens).toBe(500);
+        expect(result.cacheWriteTokens).toBe(300);
+        expect(result.cachedTokens).toBe(800);
+        expect(result.reasoningTokens).toBe(1024);
+        expect(result.lastCallInputTokens).toBe(35204);
+        expect(result.lastCallOutputTokens).toBe(16);
+    });
+
+    it('falls back totalTokens to total_input + total_output when total_tokens absent', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                total_input_tokens: 50000,
+                total_output_tokens: 5000
+            }
+        };
+
+        const result = getContextWindowMetrics(data);
+        expect(result.totalTokens).toBe(55000);
     });
 });

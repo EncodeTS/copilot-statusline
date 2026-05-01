@@ -31,7 +31,6 @@ export const WIDGET_MANIFEST: WidgetManifestEntry[] = [
     { type: 'context-length', create: () => new widgets.ContextLengthWidget() },
     { type: 'context-window', create: () => new widgets.ContextWindowWidget() },
     { type: 'context-percentage', create: () => new widgets.ContextPercentageWidget() },
-    { type: 'context-percentage-usable', create: () => new widgets.ContextPercentageUsableWidget() },
     { type: 'context-bar', create: () => new widgets.ContextBarWidget() },
     { type: 'session-clock', create: () => new widgets.SessionClockWidget() },
     { type: 'premium-requests', create: () => new widgets.PremiumRequestsWidget() },
