@@ -12,6 +12,7 @@ import type { WidgetItem } from '../../types/Widget';
 import { ApiCallsWidget } from '../ApiCalls';
 import { CacheReadTokensWidget } from '../CacheReadTokens';
 import { CacheWriteTokensWidget } from '../CacheWriteTokens';
+import { ContextBarWidget } from '../ContextBar';
 import { ContextLengthWidget } from '../ContextLength';
 import { ContextPercentageWidget } from '../ContextPercentage';
 import { LastCallInputWidget } from '../LastCallInput';
@@ -299,11 +300,47 @@ describe('ContextPercentageWidget', () => {
     const widget = new ContextPercentageWidget();
 
     it('renders used percentage', () => {
-        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Ctx: 18.0%');
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Ctx Used: 18.0%');
+    });
+
+    it('renders remaining percentage with an explicit label', () => {
+        expect(widget.render(item({ metadata: { inverse: 'true' } }), ctx(postTurnPayload), settings)).toBe('Ctx Left: 82.0%');
+    });
+
+    it('renders a compact slider display', () => {
+        expect(widget.render(item({ metadata: { display: 'slider' } }), ctx(postTurnPayload), settings)).toBe('Ctx Used: ▓▓░░░░░░░░ 18.0%');
+    });
+
+    it('renders slider-only as a raw value when requested', () => {
+        expect(widget.render(item({ rawValue: true, metadata: { display: 'slider-only' } }), ctx(postTurnPayload), settings)).toBe('▓▓░░░░░░░░');
     });
 
     it('returns null when percentage is null', () => {
         expect(widget.render(item(), ctx(startupPayload), settings)).toBeNull();
+    });
+});
+
+describe('ContextBarWidget', () => {
+    const widget = new ContextBarWidget();
+
+    it('renders a compact slider display', () => {
+        expect(widget.render(item({ metadata: { display: 'slider' } }), ctx(postTurnPayload), settings)).toBe('Context: ▓▓░░░░░░░░ 36k/200k (18%)');
+    });
+
+    it('renders a slider-only display', () => {
+        expect(widget.render(item({ metadata: { display: 'slider-only' } }), ctx(postTurnPayload), settings)).toBe('Context: ▓▓░░░░░░░░');
+    });
+
+    it('cycles through progress and slider display modes', () => {
+        const full = widget.handleEditorAction('toggle-progress', item({ metadata: { display: 'progress-short' } }));
+        const slider = widget.handleEditorAction('toggle-progress', item({ metadata: { display: 'progress' } }));
+        const sliderOnly = widget.handleEditorAction('toggle-progress', item({ metadata: { display: 'slider' } }));
+        const short = widget.handleEditorAction('toggle-progress', item({ metadata: { display: 'slider-only' } }));
+
+        expect(full?.metadata?.display).toBe('progress');
+        expect(slider?.metadata?.display).toBe('slider');
+        expect(sliderOnly?.metadata?.display).toBe('slider-only');
+        expect(short?.metadata?.display).toBe('progress-short');
     });
 });
 

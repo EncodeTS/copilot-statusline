@@ -86,6 +86,7 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 | Tokens Cached | Tokens Cached | `context_window.total_cache_read_tokens + total_cache_write_tokens` |
 | Tokens Total | Tokens Total | `context_window.total_tokens` |
 | Context Length | Context Length | `context_window.current_context_tokens` (live, aligns with ccstatusline semantics) |
+| Context Window | Context Window | `context_window.displayed_context_limit ?? context_window_size` |
 | Context % | Context % | `context_window.current_context_used_percentage` (live; capped at 100) |
 | Context % (usable) | Context % (usable) | `current_context_tokens / displayed_context_limit` |
 | Context Bar | Context Bar | `current_context_tokens / displayed_context_limit` (clamped to 100%) |
@@ -97,12 +98,16 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 | Git Deletions | Git Deletions | `cost.total_lines_removed` or git |
 | Git Status | Git Status | `git` command |
 | Git Staged/Unstaged/Untracked/Conflicts | Same | `git` command |
+| Git Staged/Unstaged/Untracked Files | Same | `git` command (`git status --porcelain -z`) |
+| Git Clean Status | Same | `git` command (`git status --porcelain -z`) |
 | Git Ahead/Behind | Git Ahead/Behind | `git` command |
 | Git SHA | Git SHA | `git` command |
 | Git PR | Git PR | `git`/`gh` command |
 | Git Root Dir | Git Root Dir | `git` command |
 | Git Origin/Upstream widgets | Same | `git` command |
 | Git Is Fork | Git Is Fork | `git` command |
+| Git Worktree | Git Worktree | `git` command (probes `git rev-parse --git-dir`) |
+| Git Worktree Mode | Git Worktree Mode | `git` command (probes linked worktree state) |
 | Custom Text | Custom Text | Static config |
 | Custom Command | Custom Command | Shell exec |
 | Custom Symbol | Custom Symbol | Static config |
@@ -167,10 +172,7 @@ Examples:
 | Remaining Tokens | Live remaining tokens in context (`displayed_context_limit − current_context_tokens`) | computed |
 | Cache Read Tokens | Total cache read tokens | `context_window.total_cache_read_tokens` |
 | Cache Write Tokens | Total cache write tokens | `context_window.total_cache_write_tokens` |
-| Context Window | Model's context window size (max tokens) | `context_window.displayed_context_limit ?? context_window_size` |
 | Tokens Reasoning | Total reasoning (thinking) tokens consumed | `context_window.total_reasoning_tokens` |
-| Git Worktree | Current git worktree name (probes `git rev-parse --git-dir`; works because Copilot payload has no worktree info) | git CLI |
-| Git Worktree Mode | `⎇` indicator when current dir is a linked worktree | git CLI |
 
 ## 4. Architecture
 
@@ -201,10 +203,11 @@ copilot_statusline/
 │   │   ├── TokensInputWidget.ts
 │   │   ├── TokensOutputWidget.ts
 │   │   ├── TokensCachedWidget.ts
+│   │   ├── TokensReasoningWidget.ts
 │   │   ├── TokensTotalWidget.ts
 │   │   ├── ContextLengthWidget.ts
+│   │   ├── ContextWindowWidget.ts
 │   │   ├── ContextPercentageWidget.ts
-│   │   ├── ContextPercentageUsableWidget.ts
 │   │   ├── ContextBarWidget.ts
 │   │   ├── SessionClockWidget.ts
 │   │   ├── ThinkingEffortWidget.ts       # Parsed from model.display_name
@@ -226,8 +229,12 @@ copilot_statusline/
 │   │   ├── GitDeletionsWidget.ts
 │   │   ├── GitStatusWidget.ts
 │   │   ├── GitStagedWidget.ts
+│   │   ├── GitStagedFilesWidget.ts
 │   │   ├── GitUnstagedWidget.ts
+│   │   ├── GitUnstagedFilesWidget.ts
 │   │   ├── GitUntrackedWidget.ts
+│   │   ├── GitUntrackedFilesWidget.ts
+│   │   ├── GitCleanStatusWidget.ts
 │   │   ├── GitConflictsWidget.ts
 │   │   ├── GitAheadBehindWidget.ts
 │   │   ├── GitSHAWidget.ts

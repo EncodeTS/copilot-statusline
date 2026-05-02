@@ -265,6 +265,7 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 | Tokens Input | `tokens-input` | Total input tokens |
 | Tokens Output | `tokens-output` | Total output tokens |
 | Tokens Cached | `tokens-cached` | Total cached tokens (read + write) |
+| Tokens Reasoning | `tokens-reasoning` | Total reasoning (thinking) tokens consumed |
 | Tokens Total | `tokens-total` | Total tokens |
 | Last Call Input | `last-call-input` | Input tokens from most recent API call |
 | Last Call Output | `last-call-output` | Output tokens from most recent API call |
@@ -274,11 +275,11 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 ### Context
 | Widget | Type | Description |
 |--------|------|-------------|
-| Context Length | `context-length` | Context window size |
-| Context % | `context-percentage` | Percentage of context window used or remaining |
+| Context Length | `context-length` | Current context length in tokens (live, from `current_context_tokens`) |
+| Context Window | `context-window` | Model's context window size (max tokens, from `displayed_context_limit ?? context_window_size`) |
 | Context % | `context-percentage` | Live context % from Copilot (`current_context_used_percentage`) |
-| Context Bar | `context-bar` | Visual progress bar for context usage |
-| Remaining Tokens | `remaining-tokens` | Absolute remaining context tokens |
+| Context Bar | `context-bar` | Visual progress bar for live context usage |
+| Remaining Tokens | `remaining-tokens` | Live remaining tokens (`displayed_context_limit − current_context_tokens`) |
 
 ### Git
 | Widget | Type | Description |
@@ -289,8 +290,12 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 | Git Deletions | `git-deletions` | Uncommitted deletions only |
 | Git Status | `git-status` | Staged/unstaged/untracked/conflicts indicators |
 | Git Staged | `git-staged` | Staged changes indicator |
+| Git Staged Files | `git-staged-files` | Count of staged files (`S:3`, raw: `3`) |
 | Git Unstaged | `git-unstaged` | Unstaged changes indicator |
+| Git Unstaged Files | `git-unstaged-files` | Count of unstaged tracked files (`M:2`, raw: `2`) |
 | Git Untracked | `git-untracked` | Untracked files indicator |
+| Git Untracked Files | `git-untracked-files` | Count of untracked files (`?:1`, raw: `1`) |
+| Git Clean Status | `git-clean-status` | Working tree clean/dirty status (`✓`/`✗`, raw: `clean`/`dirty`) |
 | Git Conflicts | `git-conflicts` | Merge conflict count |
 | Git Ahead/Behind | `git-ahead-behind` | Commits ahead/behind upstream |
 | Git SHA | `git-sha` | Short commit hash |
@@ -303,6 +308,8 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 | Git Upstream Repo | `git-upstream-repo` | Upstream remote repo name |
 | Git Upstream Owner/Repo | `git-upstream-owner-repo` | Upstream `owner/repo` |
 | Git Is Fork | `git-is-fork` | Fork detection indicator |
+| Git Worktree | `git-worktree` | Current git worktree name (probes `git rev-parse --git-dir`) |
+| Git Worktree Mode | `git-worktree-mode` | `⎇` indicator when current dir is a linked worktree |
 
 ### System
 | Widget | Type | Description |
@@ -339,7 +346,8 @@ These widgets are exclusive to copilot-statusline and not available in ccstatusl
 | Premium Rate | `premium-rate` | Burn rate in requests/minute |
 | Last Call Input | `last-call-input` | Input tokens from the most recent API call |
 | Last Call Output | `last-call-output` | Output tokens from the most recent API call |
-| Remaining Tokens | `remaining-tokens` | Absolute remaining context window tokens |
+| Remaining Tokens | `remaining-tokens` | Live remaining tokens (`displayed_context_limit − current_context_tokens`) |
+| Tokens Reasoning | `tokens-reasoning` | Total reasoning (thinking) tokens consumed |
 | Cache Read Tokens | `cache-read-tokens` | Total cache read tokens |
 | Cache Write Tokens | `cache-write-tokens` | Total cache write tokens |
 
@@ -368,7 +376,8 @@ Widget-specific shortcuts:
 | Git widgets | `h` | Toggle hide `no git` output |
 | Git Branch | `l` | Toggle GitHub link |
 | Context % widgets | `u` | Toggle used/remaining display |
-| Context Bar | `p` | Cycle bar style (short/full) |
+| Context % widgets | `p` | Cycle numeric/short bar display |
+| Context Bar | `p` | Cycle bar style (medium/full/short/short-only) |
 | Current Working Dir | `h` | Toggle `~` home abbreviation |
 | Current Working Dir | `s` | Edit segment limit |
 | Current Working Dir | `f` | Toggle fish-style path |

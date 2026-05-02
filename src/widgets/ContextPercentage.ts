@@ -13,6 +13,13 @@ import {
     handleContextInverseAction,
     isContextInverse
 } from './shared/context-inverse';
+import {
+    cycleContextSliderMode,
+    getContextSliderKeybinds,
+    getContextSliderMode,
+    getContextSliderModifierText,
+    renderContextSlider
+} from './shared/context-slider';
 import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class ContextPercentageWidget implements Widget {
@@ -21,29 +28,45 @@ export class ContextPercentageWidget implements Widget {
     getDisplayName(): string { return 'Context %'; }
     getCategory(): string { return 'Context'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
+        const modifiers = [
+            getContextInverseModifierText(item),
+            getContextSliderModifierText(item)
+        ].filter((modifier): modifier is string => modifier !== undefined);
+
         return {
             displayText: this.getDisplayName(),
-            modifierText: getContextInverseModifierText(item)
+            modifierText: modifiers.length > 0
+                ? `(${modifiers.map(modifier => modifier.replace(/^\(|\)$/g, '')).join(', ')})`
+                : undefined
         };
     }
 
     handleEditorAction(action: string, item: WidgetItem): WidgetItem | null {
+        if (action === 'toggle-slider') {
+            return cycleContextSliderMode(item);
+        }
         return handleContextInverseAction(action, item);
     }
 
     render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
         const isInverse = isContextInverse(item);
+        const label = isInverse ? 'Ctx Left: ' : 'Ctx Used: ';
+        const sliderMode = getContextSliderMode(item);
+
+        const formatPercentage = (displayPercentage: number): string => {
+            const sliderDisplay = renderContextSlider(sliderMode, displayPercentage);
+            return formatRawOrLabeledValue(item, label, sliderDisplay ?? `${displayPercentage.toFixed(1)}%`);
+        };
 
         if (context.isPreview) {
-            const previewValue = isInverse ? '90.7%' : '9.3%';
-            return formatRawOrLabeledValue(item, 'Ctx: ', previewValue);
+            return formatPercentage(isInverse ? 90.7 : 9.3);
         }
 
         const metrics = getContextWindowMetrics(context.data);
         if (metrics.currentContextUsedPercentage !== null) {
             const pct = metrics.currentContextUsedPercentage;
             const displayPercentage = isInverse ? (100 - pct) : pct;
-            return formatRawOrLabeledValue(item, 'Ctx: ', `${displayPercentage.toFixed(1)}%`);
+            return formatPercentage(displayPercentage);
         }
 
         return null;
@@ -51,7 +74,8 @@ export class ContextPercentageWidget implements Widget {
 
     getCustomKeybinds(): CustomKeybind[] {
         return [
-            { key: 'u', label: '(u)sed/remaining', action: 'toggle-inverse' }
+            { key: 'u', label: '(u)sed/remaining', action: 'toggle-inverse' },
+            ...getContextSliderKeybinds()
         ];
     }
 

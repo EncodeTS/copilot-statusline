@@ -9,10 +9,20 @@ import type {
 import { getContextWindowMetrics } from '../utils/context-window';
 import { makeUsageProgressBar } from '../utils/progress-bar';
 
-type DisplayMode = 'progress' | 'progress-short';
+import { renderContextSlider } from './shared/context-slider';
+
+type DisplayMode = 'progress' | 'progress-short' | 'slider' | 'slider-only';
 
 function getDisplayMode(item: WidgetItem): DisplayMode {
-    return item.metadata?.display === 'progress' ? 'progress' : 'progress-short';
+    const mode = item.metadata?.display;
+    if (mode === 'progress' || mode === 'slider' || mode === 'slider-only') {
+        return mode;
+    }
+    return 'progress-short';
+}
+
+function isSliderMode(mode: DisplayMode): mode is 'slider' | 'slider-only' {
+    return mode === 'slider' || mode === 'slider-only';
 }
 
 export class ContextBarWidget implements Widget {
@@ -26,7 +36,11 @@ export class ContextBarWidget implements Widget {
         const modifiers: string[] = [];
 
         if (mode === 'progress-short') {
+            modifiers.push('medium bar');
+        } else if (mode === 'slider') {
             modifiers.push('short bar');
+        } else if (mode === 'slider-only') {
+            modifiers.push('short bar only');
         }
 
         return {
@@ -41,7 +55,13 @@ export class ContextBarWidget implements Widget {
         }
 
         const currentMode = getDisplayMode(item);
-        const nextMode: DisplayMode = currentMode === 'progress-short' ? 'progress' : 'progress-short';
+        const nextMode: DisplayMode = currentMode === 'progress-short'
+            ? 'progress'
+            : currentMode === 'progress'
+                ? 'slider'
+                : currentMode === 'slider'
+                    ? 'slider-only'
+                    : 'progress-short';
 
         return {
             ...item,
@@ -58,6 +78,12 @@ export class ContextBarWidget implements Widget {
         const powerlineMode = settings.powerline.enabled;
 
         if (context.isPreview) {
+            if (isSliderMode(displayMode)) {
+                const slider = renderContextSlider('slider-only', 25);
+                const sliderDisplay = displayMode === 'slider' ? `${slider} 50k/200k (25%)` : slider;
+                return item.rawValue ? sliderDisplay : `Context: ${sliderDisplay}`;
+            }
+
             const previewDisplay = `${makeUsageProgressBar(25, barWidth, powerlineMode)} 50k/200k (25%)`;
             return item.rawValue ? previewDisplay : `Context: ${previewDisplay}`;
         }
@@ -76,6 +102,13 @@ export class ContextBarWidget implements Widget {
 
         const usedK = Math.round(used / 1000);
         const totalK = Math.round(total / 1000);
+
+        if (isSliderMode(displayMode)) {
+            const slider = renderContextSlider('slider-only', clampedPercent);
+            const sliderDisplay = displayMode === 'slider' ? `${slider} ${usedK}k/${totalK}k (${Math.round(clampedPercent)}%)` : slider;
+            return item.rawValue ? sliderDisplay : `Context: ${sliderDisplay}`;
+        }
+
         const display = `${makeUsageProgressBar(clampedPercent, barWidth, powerlineMode)} ${usedK}k/${totalK}k (${Math.round(clampedPercent)}%)`;
 
         return item.rawValue ? display : `Context: ${display}`;
