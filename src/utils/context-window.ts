@@ -66,8 +66,13 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
     const lastCallInputTokens = toFiniteNonNegativeNumber(contextWindow.last_call_input_tokens);
     const lastCallOutputTokens = toFiniteNonNegativeNumber(contextWindow.last_call_output_tokens);
 
-    const cachedTokens = cacheReadTokens !== null || cacheWriteTokens !== null
-        ? (cacheReadTokens ?? 0) + (cacheWriteTokens ?? 0)
+    // `cachedTokens` aligns with upstream ccstatusline semantics: it represents
+    // the cached portion of the *most recent* API call (current_usage), not a
+    // cumulative session total.
+    const currentUsage = contextWindow.current_usage;
+    const cachedTokens = currentUsage
+        ? (toFiniteNonNegativeNumber(currentUsage.cache_creation_input_tokens) ?? 0)
+        + (toFiniteNonNegativeNumber(currentUsage.cache_read_input_tokens) ?? 0)
         : null;
 
     const totalTokens = toFiniteNonNegativeNumber(contextWindow.total_tokens)

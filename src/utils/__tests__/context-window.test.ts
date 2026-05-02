@@ -90,7 +90,7 @@ describe('getContextWindowMetrics', () => {
         expect(result.currentContextUsedPercentage).toBe(100);
     });
 
-    it('exposes reasoning, last-call, and cache token counts', () => {
+    it('exposes reasoning, last-call, and cumulative cache R/W counts', () => {
         const data: CopilotPayload = {
             context_window: {
                 context_window_size: 200000,
@@ -108,10 +108,24 @@ describe('getContextWindowMetrics', () => {
         const result = getContextWindowMetrics(data);
         expect(result.cacheReadTokens).toBe(500);
         expect(result.cacheWriteTokens).toBe(300);
-        expect(result.cachedTokens).toBe(800);
         expect(result.reasoningTokens).toBe(1024);
         expect(result.lastCallInputTokens).toBe(35204);
         expect(result.lastCallOutputTokens).toBe(16);
+    });
+
+    it('reads per-call cached tokens from current_usage (cache_creation + cache_read)', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                current_usage: {
+                    input_tokens: 43954,
+                    output_tokens: 15,
+                    cache_creation_input_tokens: 20656,
+                    cache_read_input_tokens: 23292
+                }
+            }
+        };
+
+        expect(getContextWindowMetrics(data).cachedTokens).toBe(20656 + 23292);
     });
 
     it('falls back totalTokens to total_input + total_output when total_tokens absent', () => {

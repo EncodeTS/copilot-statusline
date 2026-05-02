@@ -12,7 +12,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class TokensCachedWidget implements Widget {
     getDefaultColor(): string { return 'brightBlack'; }
-    getDescription(): string { return 'Shows total cached tokens (read + write) for the current session'; }
+    getDescription(): string { return 'Shows cached tokens for the latest API call (cache read + cache creation)'; }
     getDisplayName(): string { return 'Tokens Cached'; }
     getCategory(): string { return 'Tokens'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
