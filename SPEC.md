@@ -83,7 +83,7 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 | Free Memory | Free Memory | `os.freemem()` |
 | Tokens Input | Tokens Input | `context_window.total_input_tokens` |
 | Tokens Output | Tokens Output | `context_window.total_output_tokens` |
-| Tokens Cached | Tokens Cached | `context_window.total_cache_read_tokens + total_cache_write_tokens` |
+| Tokens Cached | Tokens Cached | `context_window.current_usage.cache_creation_input_tokens + cache_read_input_tokens` (latest API call) |
 | Tokens Total | Tokens Total | `context_window.total_tokens` |
 | Context Length | Context Length | `context_window.current_context_tokens` (live, aligns with ccstatusline semantics) |
 | Context Window | Context Window | `context_window.displayed_context_limit ?? context_window_size` |

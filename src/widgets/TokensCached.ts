@@ -21,12 +21,12 @@ export class TokensCachedWidget implements Widget {
 
     render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
         if (context.isPreview) {
-            return formatRawOrLabeledValue(item, 'Cached: ', '8.5k');
+            return formatRawOrLabeledValue(item, 'Last Cache: ', '8.5k');
         }
 
         const metrics = getContextWindowMetrics(context.data);
         if (metrics.cachedTokens !== null) {
-            return formatRawOrLabeledValue(item, 'Cached: ', formatTokens(metrics.cachedTokens));
+            return formatRawOrLabeledValue(item, 'Last Cache: ', formatTokens(metrics.cachedTokens));
         }
         return null;
     }

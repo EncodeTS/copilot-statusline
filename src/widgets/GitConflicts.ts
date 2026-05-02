@@ -14,10 +14,16 @@ import {
 import { makeModifierText } from './shared/editor-display';
 import {
     getHideNoGitKeybinds,
-    getHideNoGitModifierText,
+    getHideNoGitLabel,
     handleToggleNoGitAction,
     isHideNoGitEnabled
 } from './shared/git-no-git';
+import {
+    getHideWhenZeroKeybinds,
+    getHideWhenZeroLabel,
+    handleToggleHideWhenZeroAction,
+    isHideWhenZeroEnabled
+} from './shared/hide-when-zero';
 
 export class GitConflictsWidget implements Widget {
     getDefaultColor(): string { return 'red'; }
@@ -26,19 +32,17 @@ export class GitConflictsWidget implements Widget {
     getCategory(): string { return 'Git'; }
 
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
-        const modifiers: string[] = [];
-        const noGitText = getHideNoGitModifierText(item);
-        if (noGitText)
-            modifiers.push('hide \'no git\'');
+        const labels = [getHideNoGitLabel(item), getHideWhenZeroLabel(item)]
+            .filter((label): label is string => label !== undefined);
 
         return {
             displayText: this.getDisplayName(),
-            modifierText: makeModifierText(modifiers)
+            modifierText: makeModifierText(labels)
         };
     }
 
     handleEditorAction(action: string, item: WidgetItem): WidgetItem | null {
-        return handleToggleNoGitAction(action, item);
+        return handleToggleNoGitAction(action, item) ?? handleToggleHideWhenZeroAction(action, item);
     }
 
     render(item: WidgetItem, context: RenderContext, _settings: Settings): string | null {
@@ -56,6 +60,10 @@ export class GitConflictsWidget implements Widget {
 
         const count = getGitConflictCount(context);
 
+        if (count === 0 && isHideWhenZeroEnabled(item)) {
+            return null;
+        }
+
         if (item.rawValue) {
             return count.toString();
         }
@@ -64,7 +72,7 @@ export class GitConflictsWidget implements Widget {
     }
 
     getCustomKeybinds(): CustomKeybind[] {
-        return getHideNoGitKeybinds();
+        return [...getHideNoGitKeybinds(), ...getHideWhenZeroKeybinds()];
     }
 
     getNumericValue(context: RenderContext, _item: WidgetItem): number | null {

@@ -16,6 +16,7 @@ import {
 import { DEFAULT_SETTINGS } from '../../types/Settings';
 import { clearGitCache } from '../../utils/git';
 import { GitCleanStatusWidget } from '../GitCleanStatus';
+import { GitConflictsWidget } from '../GitConflicts';
 import { GitStagedFilesWidget } from '../GitStagedFiles';
 import { GitUnstagedFilesWidget } from '../GitUnstagedFiles';
 import { GitUntrackedFilesWidget } from '../GitUntrackedFiles';
@@ -99,6 +100,7 @@ gitDescribe('git file status widgets', () => {
         expect(new GitStagedFilesWidget().render(itemFor('git-staged-files'), { data: { cwd } }, DEFAULT_SETTINGS)).toBeNull();
         expect(new GitUnstagedFilesWidget().render(itemFor('git-unstaged-files'), { data: { cwd } }, DEFAULT_SETTINGS)).toBeNull();
         expect(new GitUntrackedFilesWidget().render(itemFor('git-untracked-files'), { data: { cwd } }, DEFAULT_SETTINGS)).toBeNull();
+        expect(new GitConflictsWidget().render(itemFor('git-conflicts'), { data: { cwd } }, DEFAULT_SETTINGS)).toBeNull();
     });
 
     it('still renders nonzero counts when hideWhenZero metadata is set', () => {

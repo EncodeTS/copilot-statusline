@@ -264,7 +264,7 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 |--------|------|-------------|
 | Tokens Input | `tokens-input` | Total input tokens |
 | Tokens Output | `tokens-output` | Total output tokens |
-| Tokens Cached | `tokens-cached` | Total cached tokens (read + write) |
+| Tokens Cached | `tokens-cached` | Cached tokens from the most recent API call (`current_usage.cache_creation_input_tokens + cache_read_input_tokens`; rendered as `Last Cache:`) |
 | Tokens Reasoning | `tokens-reasoning` | Total reasoning (thinking) tokens consumed |
 | Tokens Total | `tokens-total` | Total tokens |
 | Last Call Input | `last-call-input` | Input tokens from most recent API call |
@@ -374,6 +374,7 @@ Widget-specific shortcuts:
 | Widget | Key | Action |
 |--------|-----|--------|
 | Git widgets | `h` | Toggle hide `no git` output |
+| Count widgets | `z` | Toggle hide when rendered value is zero |
 | Git Branch | `l` | Toggle GitHub link |
 | Context % widgets | `u` | Toggle used/remaining display |
 | Context % widgets | `p` | Cycle numeric/short bar display |

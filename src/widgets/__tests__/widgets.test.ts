@@ -26,8 +26,10 @@ import { SessionClockWidget } from '../SessionClock';
 import { SessionIdWidget } from '../SessionId';
 import { SessionNameWidget } from '../SessionName';
 import { ThinkingEffortWidget } from '../ThinkingEffort';
+import { TokensCachedWidget } from '../TokensCached';
 import { TokensInputWidget } from '../TokensInput';
 import { TokensOutputWidget } from '../TokensOutput';
+import { TokensReasoningWidget } from '../TokensReasoning';
 import { TokensTotalWidget } from '../TokensTotal';
 import { VersionWidget } from '../Version';
 
@@ -70,7 +72,13 @@ const postTurnPayload: CopilotPayload = {
         remaining_percentage: 82,
         remaining_tokens: 164780,
         last_call_input_tokens: 35204,
-        last_call_output_tokens: 16
+        last_call_output_tokens: 16,
+        current_usage: {
+            input_tokens: 35204,
+            output_tokens: 16,
+            cache_creation_input_tokens: 300,
+            cache_read_input_tokens: 500
+        }
     }
 };
 
@@ -373,6 +381,10 @@ describe('PremiumRequestsWidget', () => {
     it('renders raw value', () => {
         expect(widget.render(item({ rawValue: true }), ctx(postTurnPayload), settings)).toBe('3');
     });
+
+    it('can hide zero values', () => {
+        expect(widget.render(item({ metadata: { hideWhenZero: 'true' } }), ctx(startupPayload), settings)).toBeNull();
+    });
 });
 
 describe('ApiCallsWidget', () => {
@@ -380,6 +392,15 @@ describe('ApiCallsWidget', () => {
 
     it('computes api calls = premium_requests / multiplier', () => {
         expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Calls: 1');
+    });
+
+    it('can hide zero values', () => {
+        const zeroCallsPayload: CopilotPayload = {
+            ...postTurnPayload,
+            cost: { ...postTurnPayload.cost, total_premium_requests: 0 }
+        };
+
+        expect(widget.render(item({ metadata: { hideWhenZero: 'true' } }), ctx(zeroCallsPayload), settings)).toBeNull();
     });
 
     it('returns null when multiplier unavailable', () => {
@@ -418,6 +439,18 @@ describe('LastCallOutputWidget', () => {
     });
 });
 
+describe('TokensCachedWidget', () => {
+    const widget = new TokensCachedWidget();
+
+    it('renders the cached tokens from the latest API call', () => {
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Last Cache: 800');
+    });
+
+    it('renders raw cached tokens from the latest API call', () => {
+        expect(widget.render(item({ rawValue: true }), ctx(postTurnPayload), settings)).toBe('800');
+    });
+});
+
 describe('RemainingTokensWidget', () => {
     const widget = new RemainingTokensWidget();
 
@@ -440,5 +473,17 @@ describe('CacheWriteTokensWidget', () => {
 
     it('renders cache write tokens', () => {
         expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Cache W: 300');
+    });
+});
+
+describe('TokensReasoningWidget', () => {
+    const widget = new TokensReasoningWidget();
+
+    it('renders reasoning tokens', () => {
+        expect(widget.render(item(), ctx({ ...postTurnPayload, context_window: { ...postTurnPayload.context_window, total_reasoning_tokens: 1024 } }), settings)).toBe('Reasoning: 1.0k');
+    });
+
+    it('can hide zero values', () => {
+        expect(widget.render(item({ metadata: { hideWhenZero: 'true' } }), ctx(postTurnPayload), settings)).toBeNull();
     });
 });
