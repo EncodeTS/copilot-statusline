@@ -88,8 +88,7 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 | Context Length | Context Length | `context_window.current_context_tokens` (live, aligns with ccstatusline semantics) |
 | Context Window | Context Window | `context_window.displayed_context_limit ?? context_window_size` |
 | Context % | Context % | `context_window.current_context_used_percentage` (live; capped at 100) |
-| Context % (usable) | Context % (usable) | `current_context_tokens / displayed_context_limit` |
-| Context Bar | Context Bar | `current_context_tokens / displayed_context_limit` (clamped to 100%) |
+| Context Bar | Context Bar | `context_window.current_context_used_percentage` for the bar percentage; `current_context_tokens` / `displayed_context_limit` for the `used/total` label |
 | Session Clock | Session Clock | `cost.total_duration_ms` (directly from payload!) |
 | Session Cost | Premium Requests | `cost.total_premium_requests` (replaces USD cost) |
 | Git Branch | Git Branch | `git` command (same as ccstatusline) |

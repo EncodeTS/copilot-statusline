@@ -128,6 +128,19 @@ describe('getContextWindowMetrics', () => {
         expect(getContextWindowMetrics(data).cachedTokens).toBe(20656 + 23292);
     });
 
+    it('treats a current API call with no cache fields as zero cached tokens', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                current_usage: {
+                    input_tokens: 123,
+                    output_tokens: 45
+                }
+            }
+        };
+
+        expect(getContextWindowMetrics(data).cachedTokens).toBe(0);
+    });
+
     it('falls back totalTokens to total_input + total_output when total_tokens absent', () => {
         const data: CopilotPayload = {
             context_window: {

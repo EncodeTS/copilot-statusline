@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+## 0.1.16
+
 - Clarified `tokens-cached` semantics and label: it now renders as `Last Cache:` and represents cached tokens from the most recent API call (`current_usage.cache_creation_input_tokens + cache_read_input_tokens`), matching upstream ccstatusline semantics.
-- Added opt-in `(z)` "hide when zero" support to more count widgets: `git-conflicts`, `api-calls`, `premium-requests`, and `tokens-reasoning`.
+- Added opt-in `(z)` "hide when zero" support to count widgets: `git-staged-files`, `git-unstaged-files`, `git-untracked-files`, `git-conflicts`, `api-calls`, `premium-requests`, and `tokens-reasoning`.
+- Hardened git command execution and shared porcelain parsing for git status widgets.
+- Updated the field mapping spec for current context bar semantics.
 
 ## 0.1.15
 
