@@ -11,12 +11,19 @@ import {
     isInsideGitWorkTree
 } from '../utils/git';
 
+import { makeModifierText } from './shared/editor-display';
 import {
     getHideNoGitKeybinds,
-    getHideNoGitModifierText,
+    getHideNoGitLabel,
     handleToggleNoGitAction,
     isHideNoGitEnabled
 } from './shared/git-no-git';
+import {
+    getHideWhenZeroKeybinds,
+    getHideWhenZeroLabel,
+    handleToggleHideWhenZeroAction,
+    isHideWhenZeroEnabled
+} from './shared/hide-when-zero';
 
 export class GitStagedFilesWidget implements Widget {
     getDefaultColor(): string { return 'green'; }
@@ -25,14 +32,17 @@ export class GitStagedFilesWidget implements Widget {
     getCategory(): string { return 'Git'; }
 
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
+        const labels = [getHideNoGitLabel(item), getHideWhenZeroLabel(item)]
+            .filter((label): label is string => label !== undefined);
+
         return {
             displayText: this.getDisplayName(),
-            modifierText: getHideNoGitModifierText(item)
+            modifierText: makeModifierText(labels)
         };
     }
 
     handleEditorAction(action: string, item: WidgetItem): WidgetItem | null {
-        return handleToggleNoGitAction(action, item);
+        return handleToggleNoGitAction(action, item) ?? handleToggleHideWhenZeroAction(action, item);
     }
 
     render(item: WidgetItem, context: RenderContext, _settings: Settings): string | null {
@@ -47,11 +57,14 @@ export class GitStagedFilesWidget implements Widget {
         }
 
         const count = getGitFileStatusCounts(context).staged;
+        if (count === 0 && isHideWhenZeroEnabled(item)) {
+            return null;
+        }
         return item.rawValue ? count.toString() : `S:${count}`;
     }
 
     getCustomKeybinds(): CustomKeybind[] {
-        return getHideNoGitKeybinds();
+        return [...getHideNoGitKeybinds(), ...getHideWhenZeroKeybinds()];
     }
 
     getNumericValue(context: RenderContext, _item: WidgetItem): number | null {

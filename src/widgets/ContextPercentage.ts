@@ -9,17 +9,18 @@ import type {
 import { getContextWindowMetrics } from '../utils/context-window';
 
 import {
-    getContextInverseModifierText,
+    getContextInverseLabel,
     handleContextInverseAction,
     isContextInverse
 } from './shared/context-inverse';
 import {
     cycleContextSliderMode,
     getContextSliderKeybinds,
+    getContextSliderLabel,
     getContextSliderMode,
-    getContextSliderModifierText,
     renderContextSlider
 } from './shared/context-slider';
+import { makeModifierText } from './shared/editor-display';
 import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class ContextPercentageWidget implements Widget {
@@ -28,16 +29,14 @@ export class ContextPercentageWidget implements Widget {
     getDisplayName(): string { return 'Context %'; }
     getCategory(): string { return 'Context'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
-        const modifiers = [
-            getContextInverseModifierText(item),
-            getContextSliderModifierText(item)
-        ].filter((modifier): modifier is string => modifier !== undefined);
+        const labels = [
+            getContextInverseLabel(item),
+            getContextSliderLabel(item)
+        ].filter((label): label is string => label !== undefined);
 
         return {
             displayText: this.getDisplayName(),
-            modifierText: modifiers.length > 0
-                ? `(${modifiers.map(modifier => modifier.replace(/^\(|\)$/g, '')).join(', ')})`
-                : undefined
+            modifierText: makeModifierText(labels)
         };
     }
 

@@ -13,6 +13,20 @@ import { renderContextSlider } from './shared/context-slider';
 
 type DisplayMode = 'progress' | 'progress-short' | 'slider' | 'slider-only';
 
+const DISPLAY_MODE_CYCLE: Record<DisplayMode, DisplayMode> = {
+    'progress-short': 'progress',
+    'progress': 'slider',
+    'slider': 'slider-only',
+    'slider-only': 'progress-short'
+};
+
+const DISPLAY_MODE_LABELS: Record<DisplayMode, string> = {
+    'progress-short': 'medium bar',
+    'progress': '',
+    'slider': 'short bar',
+    'slider-only': 'short bar only'
+};
+
 function getDisplayMode(item: WidgetItem): DisplayMode {
     const mode = item.metadata?.display;
     if (mode === 'progress' || mode === 'slider' || mode === 'slider-only') {
@@ -32,20 +46,11 @@ export class ContextBarWidget implements Widget {
     getCategory(): string { return 'Context'; }
 
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
-        const mode = getDisplayMode(item);
-        const modifiers: string[] = [];
-
-        if (mode === 'progress-short') {
-            modifiers.push('medium bar');
-        } else if (mode === 'slider') {
-            modifiers.push('short bar');
-        } else if (mode === 'slider-only') {
-            modifiers.push('short bar only');
-        }
+        const label = DISPLAY_MODE_LABELS[getDisplayMode(item)];
 
         return {
             displayText: this.getDisplayName(),
-            modifierText: modifiers.length > 0 ? `(${modifiers.join(', ')})` : undefined
+            modifierText: label ? `(${label})` : undefined
         };
     }
 
@@ -54,14 +59,7 @@ export class ContextBarWidget implements Widget {
             return null;
         }
 
-        const currentMode = getDisplayMode(item);
-        const nextMode: DisplayMode = currentMode === 'progress-short'
-            ? 'progress'
-            : currentMode === 'progress'
-                ? 'slider'
-                : currentMode === 'slider'
-                    ? 'slider-only'
-                    : 'progress-short';
+        const nextMode = DISPLAY_MODE_CYCLE[getDisplayMode(item)];
 
         return {
             ...item,

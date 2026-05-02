@@ -62,15 +62,20 @@ export function renderContextSlider(mode: ContextSliderMode, percent: number): s
     return slider;
 }
 
-export function getContextSliderModifierText(item: WidgetItem): string | undefined {
+export function getContextSliderLabel(item: WidgetItem): string | undefined {
     const mode = getContextSliderMode(item);
     if (mode === 'slider') {
-        return '(short bar)';
+        return 'short bar';
     }
     if (mode === 'slider-only') {
-        return '(short bar only)';
+        return 'short bar only';
     }
     return undefined;
+}
+
+export function getContextSliderModifierText(item: WidgetItem): string | undefined {
+    const label = getContextSliderLabel(item);
+    return label ? `(${label})` : undefined;
 }
 
 export function getContextSliderKeybinds(): CustomKeybind[] {

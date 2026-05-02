@@ -86,4 +86,27 @@ gitDescribe('git file status widgets', () => {
         expect(new GitStagedFilesWidget().render({ id: '1', type: 'git-staged-files', rawValue: true }, { data: { cwd } }, DEFAULT_SETTINGS)).toBe('1');
         expect(new GitCleanStatusWidget().render({ id: '4', type: 'git-clean-status', rawValue: true }, { data: { cwd } }, DEFAULT_SETTINGS)).toBe('dirty');
     });
+
+    it('hides count widgets when count is zero and hideWhenZero metadata is set', () => {
+        const cwd = createRepo();
+
+        const itemFor = (type: string): { id: string; type: string; metadata: Record<string, string> } => ({
+            id: type,
+            type,
+            metadata: { hideWhenZero: 'true' }
+        });
+
+        expect(new GitStagedFilesWidget().render(itemFor('git-staged-files'), { data: { cwd } }, DEFAULT_SETTINGS)).toBeNull();
+        expect(new GitUnstagedFilesWidget().render(itemFor('git-unstaged-files'), { data: { cwd } }, DEFAULT_SETTINGS)).toBeNull();
+        expect(new GitUntrackedFilesWidget().render(itemFor('git-untracked-files'), { data: { cwd } }, DEFAULT_SETTINGS)).toBeNull();
+    });
+
+    it('still renders nonzero counts when hideWhenZero metadata is set', () => {
+        const cwd = createRepo();
+        writeFileSync(path.join(cwd, 'staged.txt'), 'staged\n');
+        git(cwd, ['add', 'staged.txt']);
+
+        const item = { id: '1', type: 'git-staged-files', metadata: { hideWhenZero: 'true' } };
+        expect(new GitStagedFilesWidget().render(item, { data: { cwd } }, DEFAULT_SETTINGS)).toBe('S:1');
+    });
 });

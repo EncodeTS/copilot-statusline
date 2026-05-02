@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 
 import type { RenderContext } from '../types/RenderContext';
 
@@ -32,16 +32,16 @@ export function resolveGitCwd(context: RenderContext): string | undefined {
 }
 
 export function runGit(command: string, context: RenderContext): string | null {
+    const args = command.trim().split(/\s+/).filter(Boolean);
     const cwd = resolveGitCwd(context);
     const cacheKey = `${command}|${cwd ?? ''}`;
 
-    // Check cache first
     if (gitCommandCache.has(cacheKey)) {
         return gitCommandCache.get(cacheKey) ?? null;
     }
 
     try {
-        const output = execSync(`git ${command}`, {
+        const output = execFileSync('git', args, {
             encoding: 'utf8',
             stdio: ['pipe', 'pipe', 'ignore'],
             ...(cwd ? { cwd } : {})
@@ -93,6 +93,30 @@ function hasRenameOrCopyStatus(line: string): boolean {
     return line.startsWith('R') || line.startsWith('C') || line[1] === 'R' || line[1] === 'C';
 }
 
+/**
+ * Iterate over `git status --porcelain -z` entries, skipping the orig-path
+ * entries that follow rename/copy lines. Return `false` from `visit` to stop
+ * iteration early.
+ */
+function forEachPorcelainEntry(output: string, visit: (line: string) => boolean | undefined): void {
+    const entries = output.split('\0');
+
+    for (let index = 0; index < entries.length; index += 1) {
+        const line = entries[index];
+        if (typeof line !== 'string' || line.length < 2)
+            continue;
+
+        const shouldContinue = visit(line);
+
+        if (hasRenameOrCopyStatus(line)) {
+            index += 1;
+        }
+
+        if (shouldContinue === false)
+            return;
+    }
+}
+
 export interface GitStatus {
     staged: boolean;
     unstaged: boolean;
@@ -112,12 +136,7 @@ export function getGitStatus(context: RenderContext): GitStatus {
     let untracked = false;
     let conflicts = false;
 
-    const entries = output.split('\0');
-
-    for (let index = 0; index < entries.length; index += 1) {
-        const line = entries[index];
-        if (typeof line !== 'string' || line.length < 2)
-            continue;
+    forEachPorcelainEntry(output, (line): boolean | undefined => {
         // Conflict detection: DD, AU, UD, UA, DU, AA, UU
         if (!conflicts && /^(DD|AU|UD|UA|DU|AA|UU)/.test(line))
             conflicts = true;
@@ -127,13 +146,11 @@ export function getGitStatus(context: RenderContext): GitStatus {
             unstaged = true;
         if (!untracked && line.startsWith('??'))
             untracked = true;
-        if (staged && unstaged && untracked && conflicts)
-            break;
 
-        if (hasRenameOrCopyStatus(line)) {
-            index += 1;
-        }
-    }
+        if (staged && unstaged && untracked && conflicts)
+            return false;
+        return undefined;
+    });
 
     return { staged, unstaged, untracked, conflicts };
 }
@@ -149,26 +166,18 @@ export function getGitFileStatusCounts(context: RenderContext): GitFileStatusCou
     let unstaged = 0;
     let untracked = 0;
 
-    const entries = output.split('\0');
-
-    for (let index = 0; index < entries.length; index += 1) {
-        const line = entries[index];
-        if (typeof line !== 'string' || line.length < 2)
-            continue;
-
+    forEachPorcelainEntry(output, (line): boolean | undefined => {
         if (line.startsWith('??')) {
             untracked += 1;
-        } else {
-            if (/^[MADRCTU]/.test(line))
-                staged += 1;
-            if (/^.[MADRCTU]/.test(line))
-                unstaged += 1;
+            return undefined;
         }
 
-        if (hasRenameOrCopyStatus(line)) {
-            index += 1;
-        }
-    }
+        if (/^[MADRCTU]/.test(line))
+            staged += 1;
+        if (/^.[MADRCTU]/.test(line))
+            unstaged += 1;
+        return undefined;
+    });
 
     return { staged, unstaged, untracked };
 }

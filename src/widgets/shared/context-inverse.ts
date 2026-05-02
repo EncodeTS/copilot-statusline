@@ -13,6 +13,10 @@ export function isContextInverse(item: WidgetItem): boolean {
     return isMetadataFlagEnabled(item, INVERSE_KEY);
 }
 
+export function getContextInverseLabel(item: WidgetItem): string | undefined {
+    return isContextInverse(item) ? 'remaining' : undefined;
+}
+
 export function getContextInverseModifierText(item: WidgetItem): string | undefined {
     return makeModifierText(isContextInverse(item) ? ['remaining'] : []);
 }
