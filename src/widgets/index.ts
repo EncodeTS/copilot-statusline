@@ -14,6 +14,7 @@ export { ContextWindowWidget } from './ContextWindow';
 export { ContextPercentageWidget } from './ContextPercentage';
 export { ContextBarWidget } from './ContextBar';
 export { SessionClockWidget } from './SessionClock';
+export { AiCreditsWidget } from './AiCredits';
 export { PremiumRequestsWidget } from './PremiumRequests';
 export { ApiCallsWidget } from './ApiCalls';
 export { PremiumRateWidget } from './PremiumRate';

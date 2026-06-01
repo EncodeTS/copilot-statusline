@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added an `ai-credits` widget backed by the new Copilot payload `ai_used` fields, and switched the default status line from premium requests to AI Credits for new configs.
+
 ## 0.1.16
 
 - Clarified `tokens-cached` semantics and label: it now renders as `Last Cache:` and represents cached tokens from the most recent API call (`current_usage.cache_creation_input_tokens + cache_read_input_tokens`), matching upstream ccstatusline semantics.

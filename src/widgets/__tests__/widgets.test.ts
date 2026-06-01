@@ -9,6 +9,7 @@ import type { RenderContext } from '../../types/RenderContext';
 import type { Settings } from '../../types/Settings';
 import { DEFAULT_SETTINGS } from '../../types/Settings';
 import type { WidgetItem } from '../../types/Widget';
+import { AiCreditsWidget } from '../AiCredits';
 import { ApiCallsWidget } from '../ApiCalls';
 import { CacheReadTokensWidget } from '../CacheReadTokens';
 import { CacheWriteTokensWidget } from '../CacheWriteTokens';
@@ -50,6 +51,10 @@ const postTurnPayload: CopilotPayload = {
     model: { id: 'claude-opus-4.6', display_name: 'claude-opus-4.6 (3x) (high)' },
     workspace: { current_dir: '/workspace' },
     version: '1.0.21',
+    ai_used: {
+        formatted: '12.8',
+        total_nano_aiu: 12791900000
+    },
     cost: {
         total_api_duration_ms: 1696,
         total_lines_added: 10,
@@ -89,6 +94,10 @@ const startupPayload: CopilotPayload = {
     model: { id: null, display_name: null },
     workspace: { current_dir: '/workspace' },
     version: '1.0.21',
+    ai_used: {
+        formatted: '0',
+        total_nano_aiu: 0
+    },
     cost: {
         total_api_duration_ms: 0,
         total_lines_added: 0,
@@ -168,6 +177,20 @@ describe('ThinkingEffortWidget', () => {
 
     it('renders thinking effort from display_name', () => {
         expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Thinking: high');
+    });
+
+    it('renders thinking effort from middle-dot display_name', () => {
+        expect(widget.render(
+            item(),
+            ctx({
+                ...postTurnPayload,
+                model: {
+                    id: 'gpt-5.5',
+                    display_name: 'gpt-5.5 · xhigh · 1.1M context'
+                }
+            }),
+            settings
+        )).toBe('Thinking: xhigh');
     });
 
     it('renders explicit thinking effort from model payload', () => {
@@ -380,6 +403,33 @@ describe('PremiumRequestsWidget', () => {
 
     it('renders raw value', () => {
         expect(widget.render(item({ rawValue: true }), ctx(postTurnPayload), settings)).toBe('3');
+    });
+
+    it('can hide zero values', () => {
+        expect(widget.render(item({ metadata: { hideWhenZero: 'true' } }), ctx(startupPayload), settings)).toBeNull();
+    });
+});
+
+describe('AiCreditsWidget', () => {
+    const widget = new AiCreditsWidget();
+
+    it('renders GitHub AI Credits from the formatted payload value', () => {
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('AI: 12.8');
+    });
+
+    it('renders raw AI Credits', () => {
+        expect(widget.render(item({ rawValue: true }), ctx(postTurnPayload), settings)).toBe('12.8');
+    });
+
+    it('falls back to formatting nano AIU when formatted value is absent', () => {
+        expect(widget.render(
+            item(),
+            ctx({
+                ...postTurnPayload,
+                ai_used: { total_nano_aiu: 11444500000 }
+            }),
+            settings
+        )).toBe('AI: 11.4');
     });
 
     it('can hide zero values', () => {

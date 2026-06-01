@@ -33,6 +33,7 @@ export const WIDGET_MANIFEST: WidgetManifestEntry[] = [
     { type: 'context-percentage', create: () => new widgets.ContextPercentageWidget() },
     { type: 'context-bar', create: () => new widgets.ContextBarWidget() },
     { type: 'session-clock', create: () => new widgets.SessionClockWidget() },
+    { type: 'ai-credits', create: () => new widgets.AiCreditsWidget() },
     { type: 'premium-requests', create: () => new widgets.PremiumRequestsWidget() },
     { type: 'api-calls', create: () => new widgets.ApiCallsWidget() },
     { type: 'premium-rate', create: () => new widgets.PremiumRateWidget() },

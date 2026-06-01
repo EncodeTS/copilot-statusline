@@ -12,6 +12,7 @@ const EFFORT_LEVELS: ReadonlySet<string> = new Set(THINKING_EFFORT_LEVELS);
 const EFFORT_LEVEL_PATTERN = THINKING_EFFORT_LEVELS.join('|');
 const MULTIPLIER_REGEX = /^(\d+)x$/;
 const LABELED_EFFORT_REGEX = new RegExp(`^(?:thinking|reasoning|effort)(?:[-_ ](?:effort|level))?\\s*[:=]\\s*(${EFFORT_LEVEL_PATTERN})$`);
+const DISPLAY_SEGMENT_SEPARATOR_REGEX = /[·•|,;]/;
 
 export function normalizeThinkingEffort(value: string | null | undefined): ThinkingEffortLevel | null {
     if (!value) {
@@ -52,13 +53,18 @@ export function parseDisplayName(displayName: string | null | undefined): Parsed
             groups.push(content);
         }
     }
+    const segments = displayName
+        .split(DISPLAY_SEGMENT_SEPARATOR_REGEX)
+        .map(segment => segment.trim())
+        .filter(segment => segment !== '');
+    const searchableGroups = [...groups, ...segments];
 
     let thinkingEffort: ThinkingEffortLevel | null = null;
     let multiplier: string | null = null;
     let multiplierValue: number | null = null;
 
-    for (let i = groups.length - 1; i >= 0; i--) {
-        const group = groups[i];
+    for (let i = searchableGroups.length - 1; i >= 0; i--) {
+        const group = searchableGroups[i];
         if (!group) {
             continue;
         }
@@ -75,7 +81,7 @@ export function parseDisplayName(displayName: string | null | undefined): Parsed
         }
     }
 
-    for (const group of groups) {
+    for (const group of searchableGroups) {
         if (!group) {
             continue;
         }

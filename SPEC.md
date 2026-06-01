@@ -90,6 +90,7 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 | Context % | Context % | `context_window.current_context_used_percentage` (live; capped at 100) |
 | Context Bar | Context Bar | `context_window.current_context_used_percentage` for the bar percentage; `current_context_tokens` / `displayed_context_limit` for the `used/total` label |
 | Session Clock | Session Clock | `cost.total_duration_ms` (directly from payload!) |
+| AI Credits | Session Cost | `ai_used.formatted` / `ai_used.total_nano_aiu` |
 | Session Cost | Premium Requests | `cost.total_premium_requests` (replaces USD cost) |
 | Git Branch | Git Branch | `git` command (same as ccstatusline) |
 | Git Changes | Git Changes | `cost.total_lines_added + total_lines_removed` or git |
@@ -163,6 +164,7 @@ Examples:
 | Widget | Description | Data Source |
 |---|---|---|
 | Model Multiplier | Per-request premium multiplier (e.g. `3x`) — from Copilot's "Model multipliers" | Parsed from `model.display_name` |
+| AI Credits | GitHub AI Credits used this session | `ai_used.formatted` (fallback: `ai_used.total_nano_aiu / 1_000_000_000`) |
 | Premium Requests | Total premium requests consumed this session | `cost.total_premium_requests` |
 | API Calls | Estimated actual API calls this session | `cost.total_premium_requests / multiplier` |
 | Premium Rate | Premium requests consumed per minute (burn rate) | `cost.total_premium_requests / (cost.total_duration_ms / 60000)` |
@@ -269,8 +271,7 @@ copilot_statusline/
 ├── tsconfig.json
 ├── eslint.config.js
 ├── vitest.config.ts
-├── SPEC.md
-└── CLAUDE.md
+└── SPEC.md
 ```
 
 ### Key Adaptation Points

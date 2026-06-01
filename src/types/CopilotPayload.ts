@@ -7,6 +7,7 @@ export const CopilotPayloadSchema = z.object({
     session_id: z.string().optional(),
     session_name: z.string().nullable().optional(),
     transcript_path: z.string().optional(),
+    username: z.string().nullable().optional(),
     model: z.object({
         id: z.string().nullable().optional(),
         display_name: z.string().nullable().optional(),
@@ -24,6 +25,10 @@ export const CopilotPayloadSchema = z.object({
         total_lines_removed: z.number().optional(),
         total_premium_requests: z.number().optional()
     }).optional(),
+    ai_used: z.object({
+        formatted: z.string().nullable().optional(),
+        total_nano_aiu: OptionalNumber
+    }).nullable().optional(),
     context_window: z.object({
         context_window_size: OptionalNumber,
         total_input_tokens: z.number().optional(),

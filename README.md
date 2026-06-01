@@ -255,6 +255,7 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 | Session Name | `session-name` | Copilot conversation title |
 | Session ID | `session-id` | Short session identifier |
 | Session Clock | `session-clock` | Elapsed session time (from `total_duration_ms`) |
+| AI Credits | `ai-credits` | GitHub AI Credits used this session (from `ai_used.formatted`) |
 | Premium Requests | `premium-requests` | Total premium requests consumed |
 | API Calls | `api-calls` | Estimated API calls (`premium_requests / multiplier`) |
 | Premium Rate | `premium-rate` | Premium request burn rate (requests/minute) |
@@ -341,6 +342,7 @@ These widgets are exclusive to copilot-statusline and not available in ccstatusl
 | Widget | Type | Description |
 |--------|------|-------------|
 | Model Multiplier | `model-multiplier` | Premium cost multiplier parsed from `display_name` (e.g., `3x`, `6x`) |
+| AI Credits | `ai-credits` | GitHub AI Credits used this session (`ai_used.formatted`, fallback from `total_nano_aiu`) |
 | Premium Requests | `premium-requests` | Total premium requests consumed this session |
 | API Calls | `api-calls` | Estimated actual API calls: `total_premium_requests / multiplier` |
 | Premium Rate | `premium-rate` | Burn rate in requests/minute |
@@ -482,11 +484,11 @@ When terminal width is detected, status lines automatically truncate with ellips
     [
       { "id": "1", "type": "model", "color": "cyan" },
       { "id": "2", "type": "separator" },
-      { "id": "3", "type": "model-multiplier", "color": "yellow" },
+      { "id": "3", "type": "thinking-effort", "color": "yellow" },
       { "id": "4", "type": "separator" },
       { "id": "5", "type": "context-percentage", "color": "blue" },
       { "id": "6", "type": "separator" },
-      { "id": "7", "type": "premium-requests", "color": "green" },
+      { "id": "7", "type": "ai-credits", "color": "green" },
       { "id": "8", "type": "separator" },
       { "id": "9", "type": "session-clock", "color": "yellow" },
       { "id": "10", "type": "flex-separator" },
@@ -501,7 +503,7 @@ When terminal width is detected, status lines automatically truncate with ellips
 
 Renders as:
 ```
-opus-4.6 | 3x | Ctx: 18.0% | Reqs: 3 | Session: <1m              ⎇ main
+Model: gpt-5.5 | Thinking: xhigh | Ctx Used: 2.0% | AI: 12.8 | Session: 1m              ⎇ main
 ```
 
 ### Color Levels
@@ -592,11 +594,11 @@ copilot-statusline and ccstatusline are **fully independent** — they use separ
 | **Config path** | `~/.config/ccstatusline/` | `~/.config/copilot-statusline/` |
 | **CLI integration** | `~/.claude/settings.json` | `~/.copilot/config.json` |
 | **npm package** | `ccstatusline` | `copilot-statusline` |
-| **Cost tracking** | USD session cost | Premium requests counter |
+| **Cost tracking** | USD session cost | GitHub AI Credits / premium requests counter |
 | **Speed metrics** | Input/output/total token speed | Not available (no per-request timing data) |
 | **Session duration** | Parsed from transcript JSONL | Direct from `cost.total_duration_ms` |
-| **Rate limits** | 5-hour blocks, weekly resets | Premium request tracking |
-| **Copilot-exclusive** | — | Model multiplier, premium rate, API calls, cache tokens, last-call tokens |
+| **Rate limits** | 5-hour blocks, weekly resets | AI Credits and premium request tracking |
+| **Copilot-exclusive** | — | AI Credits, model multiplier, premium rate, API calls, cache tokens, last-call tokens |
 | **ccstatusline-exclusive** | Vim mode, output style, skills, worktree, block timer, speed widgets | — |
 
 ---

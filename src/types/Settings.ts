@@ -17,7 +17,7 @@ export const SettingsSchema = z.object({
                 { id: '2', type: 'separator' },
                 { id: '3', type: 'context-percentage', color: 'blue' },
                 { id: '4', type: 'separator' },
-                { id: '5', type: 'premium-requests', color: 'green' },
+                { id: '5', type: 'ai-credits', color: 'green' },
                 { id: '6', type: 'separator' },
                 { id: '7', type: 'git-branch', color: 'magenta' }
             ],

@@ -64,6 +64,19 @@ describe('parseDisplayName', () => {
         expect(result.multiplier).toBeNull();
     });
 
+    it('parses effort from middle-dot display segments', () => {
+        const result = parseDisplayName('gpt-5.5 · xhigh · 1.1M context');
+        expect(result.thinkingEffort).toBe('xhigh');
+        expect(result.multiplier).toBeNull();
+    });
+
+    it('parses multiplier from middle-dot display segments', () => {
+        const result = parseDisplayName('claude-opus-4.6 · 3x · high');
+        expect(result.thinkingEffort).toBe('high');
+        expect(result.multiplier).toBe('3x');
+        expect(result.multiplierValue).toBe(3);
+    });
+
     it('parses max effort', () => {
         const result = parseDisplayName('gpt-5 (max)');
         expect(result.thinkingEffort).toBe('max');
