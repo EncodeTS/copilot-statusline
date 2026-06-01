@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.1.18
+
+- Aligned `tokens-input` and `tokens-cached` with ccstatusline's non-overlapping token buckets: `In` now excludes cached input, and `Cached:` is cumulative cache read + write tokens.
+
 ## 0.1.17
 
 - Added an `ai-credits` widget backed by the new Copilot payload `ai_used` fields, and switched the default status line from premium requests to AI Credits for new configs.

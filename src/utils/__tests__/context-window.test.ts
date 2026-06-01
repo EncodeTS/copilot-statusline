@@ -39,6 +39,8 @@ describe('getContextWindowMetrics', () => {
         expect(result.windowSize).toBeNull();
         expect(result.currentContextUsedPercentage).toBeNull();
         expect(result.totalInputTokens).toBe(0);
+        expect(result.nonCachedInputTokens).toBe(0);
+        expect(result.cachedTokens).toBe(0);
     });
 
     it('exposes current_context_tokens and current_context_used_percentage from payload', () => {
@@ -90,7 +92,7 @@ describe('getContextWindowMetrics', () => {
         expect(result.currentContextUsedPercentage).toBe(100);
     });
 
-    it('exposes reasoning, last-call, and cumulative cache R/W counts', () => {
+    it('splits Copilot input into non-cached input and cumulative cached tokens', () => {
         const data: CopilotPayload = {
             context_window: {
                 context_window_size: 200000,
@@ -106,6 +108,9 @@ describe('getContextWindowMetrics', () => {
         };
 
         const result = getContextWindowMetrics(data);
+        expect(result.totalInputTokens).toBe(35204);
+        expect(result.nonCachedInputTokens).toBe(34404);
+        expect(result.cachedTokens).toBe(800);
         expect(result.cacheReadTokens).toBe(500);
         expect(result.cacheWriteTokens).toBe(300);
         expect(result.reasoningTokens).toBe(1024);
@@ -113,22 +118,21 @@ describe('getContextWindowMetrics', () => {
         expect(result.lastCallOutputTokens).toBe(16);
     });
 
-    it('reads per-call cached tokens from current_usage (cache_creation + cache_read)', () => {
+    it('clamps non-cached input to zero when cache buckets exceed total input', () => {
         const data: CopilotPayload = {
             context_window: {
-                current_usage: {
-                    input_tokens: 43954,
-                    output_tokens: 15,
-                    cache_creation_input_tokens: 20656,
-                    cache_read_input_tokens: 23292
-                }
+                total_input_tokens: 100,
+                total_cache_read_tokens: 80,
+                total_cache_write_tokens: 40
             }
         };
 
-        expect(getContextWindowMetrics(data).cachedTokens).toBe(20656 + 23292);
+        const result = getContextWindowMetrics(data);
+        expect(result.cachedTokens).toBe(120);
+        expect(result.nonCachedInputTokens).toBe(0);
     });
 
-    it('treats a current API call with no cache fields as zero cached tokens', () => {
+    it('keeps cached tokens null when cumulative cache fields are absent', () => {
         const data: CopilotPayload = {
             context_window: {
                 current_usage: {
@@ -138,7 +142,9 @@ describe('getContextWindowMetrics', () => {
             }
         };
 
-        expect(getContextWindowMetrics(data).cachedTokens).toBe(0);
+        const result = getContextWindowMetrics(data);
+        expect(result.cachedTokens).toBeNull();
+        expect(result.nonCachedInputTokens).toBeNull();
     });
 
     it('falls back totalTokens to total_input + total_output when total_tokens absent', () => {

@@ -294,8 +294,8 @@ describe('ModelMultiplierWidget', () => {
 describe('TokensInputWidget', () => {
     const widget = new TokensInputWidget();
 
-    it('renders total input tokens', () => {
-        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('In: 35.2k');
+    it('renders non-cached input tokens', () => {
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('In: 34.4k');
     });
 });
 
@@ -492,11 +492,11 @@ describe('LastCallOutputWidget', () => {
 describe('TokensCachedWidget', () => {
     const widget = new TokensCachedWidget();
 
-    it('renders the cached tokens from the latest API call', () => {
-        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Last Cache: 800');
+    it('renders cumulative cached input tokens', () => {
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Cached: 800');
     });
 
-    it('renders raw cached tokens from the latest API call', () => {
+    it('renders raw cumulative cached input tokens', () => {
         expect(widget.render(item({ rawValue: true }), ctx(postTurnPayload), settings)).toBe('800');
     });
 });

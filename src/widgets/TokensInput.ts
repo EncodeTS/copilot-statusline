@@ -12,7 +12,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class TokensInputWidget implements Widget {
     getDefaultColor(): string { return 'blue'; }
-    getDescription(): string { return 'Shows total input tokens for the current session'; }
+    getDescription(): string { return 'Shows non-cached input tokens for the current session'; }
     getDisplayName(): string { return 'Tokens Input'; }
     getCategory(): string { return 'Tokens'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
@@ -25,8 +25,8 @@ export class TokensInputWidget implements Widget {
         }
 
         const metrics = getContextWindowMetrics(context.data);
-        if (metrics.totalInputTokens !== null) {
-            return formatRawOrLabeledValue(item, 'In: ', formatTokens(metrics.totalInputTokens));
+        if (metrics.nonCachedInputTokens !== null) {
+            return formatRawOrLabeledValue(item, 'In: ', formatTokens(metrics.nonCachedInputTokens));
         }
         return null;
     }

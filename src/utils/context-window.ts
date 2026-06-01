@@ -6,6 +6,7 @@ export interface ContextWindowMetrics {
     currentContextTokens: number | null;
     currentContextUsedPercentage: number | null;
     totalInputTokens: number | null;
+    nonCachedInputTokens: number | null;
     totalOutputTokens: number | null;
     cachedTokens: number | null;
     totalTokens: number | null;
@@ -37,6 +38,7 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
         currentContextTokens: null,
         currentContextUsedPercentage: null,
         totalInputTokens: null,
+        nonCachedInputTokens: null,
         totalOutputTokens: null,
         cachedTokens: null,
         totalTokens: null,
@@ -66,13 +68,14 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
     const lastCallInputTokens = toFiniteNonNegativeNumber(contextWindow.last_call_input_tokens);
     const lastCallOutputTokens = toFiniteNonNegativeNumber(contextWindow.last_call_output_tokens);
 
-    // `cachedTokens` aligns with upstream ccstatusline semantics: it represents
-    // the cached portion of the *most recent* API call (current_usage), not a
-    // cumulative session total.
-    const currentUsage = contextWindow.current_usage;
-    const cachedTokens = currentUsage
-        ? (toFiniteNonNegativeNumber(currentUsage.cache_creation_input_tokens) ?? 0)
-        + (toFiniteNonNegativeNumber(currentUsage.cache_read_input_tokens) ?? 0)
+    // Copilot reports cache read/write as sub-buckets of total_input_tokens.
+    // Expose upstream ccstatusline-style non-overlapping buckets:
+    // billable input + cached input + output.
+    const cachedTokens = cacheReadTokens !== null || cacheWriteTokens !== null
+        ? (cacheReadTokens ?? 0) + (cacheWriteTokens ?? 0)
+        : null;
+    const nonCachedInputTokens = totalInputTokens !== null
+        ? Math.max(0, totalInputTokens - (cachedTokens ?? 0))
         : null;
 
     const totalTokens = toFiniteNonNegativeNumber(contextWindow.total_tokens)
@@ -86,6 +89,7 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
         currentContextTokens,
         currentContextUsedPercentage,
         totalInputTokens,
+        nonCachedInputTokens,
         totalOutputTokens,
         cachedTokens,
         totalTokens,
@@ -98,7 +102,7 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
 }
 
 export function getContextWindowInputTotalTokens(data?: CopilotPayload): number | null {
-    return getContextWindowMetrics(data).totalInputTokens;
+    return getContextWindowMetrics(data).nonCachedInputTokens;
 }
 
 export function getContextWindowOutputTotalTokens(data?: CopilotPayload): number | null {

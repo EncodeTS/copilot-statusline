@@ -12,7 +12,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class TokensCachedWidget implements Widget {
     getDefaultColor(): string { return 'brightBlack'; }
-    getDescription(): string { return 'Shows cached tokens for the latest API call (cache read + cache creation)'; }
+    getDescription(): string { return 'Shows cached input tokens for the current session (cache read + cache write)'; }
     getDisplayName(): string { return 'Tokens Cached'; }
     getCategory(): string { return 'Tokens'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
@@ -21,12 +21,12 @@ export class TokensCachedWidget implements Widget {
 
     render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
         if (context.isPreview) {
-            return formatRawOrLabeledValue(item, 'Last Cache: ', '8.5k');
+            return formatRawOrLabeledValue(item, 'Cached: ', '8.5k');
         }
 
         const metrics = getContextWindowMetrics(context.data);
         if (metrics.cachedTokens !== null) {
-            return formatRawOrLabeledValue(item, 'Last Cache: ', formatTokens(metrics.cachedTokens));
+            return formatRawOrLabeledValue(item, 'Cached: ', formatTokens(metrics.cachedTokens));
         }
         return null;
     }

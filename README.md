@@ -263,9 +263,9 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 ### Tokens
 | Widget | Type | Description |
 |--------|------|-------------|
-| Tokens Input | `tokens-input` | Total input tokens |
+| Tokens Input | `tokens-input` | Non-cached input tokens |
 | Tokens Output | `tokens-output` | Total output tokens |
-| Tokens Cached | `tokens-cached` | Cached tokens from the most recent API call (`current_usage.cache_creation_input_tokens + cache_read_input_tokens`; rendered as `Last Cache:`) |
+| Tokens Cached | `tokens-cached` | Cached input tokens (`total_cache_read_tokens + total_cache_write_tokens`; rendered as `Cached:`) |
 | Tokens Reasoning | `tokens-reasoning` | Total reasoning (thinking) tokens consumed |
 | Tokens Total | `tokens-total` | Total tokens |
 | Last Call Input | `last-call-input` | Input tokens from most recent API call |
