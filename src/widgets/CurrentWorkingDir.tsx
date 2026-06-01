@@ -135,7 +135,7 @@ export class CurrentWorkingDirWidget implements Widget {
             return item.rawValue ? previewPath : `cwd: ${previewPath}`;
         }
 
-        const cwd = context.data?.cwd;
+        const cwd = context.data?.cwd ?? context.data?.workspace?.current_dir;
         if (!cwd)
             return null;
 
@@ -210,8 +210,13 @@ export class CurrentWorkingDirWidget implements Widget {
 
         // Replace home directory with ~
         let normalizedPath = path;
-        if (path.startsWith(homeDir)) {
-            normalizedPath = '~' + path.slice(homeDir.length);
+        if (path === homeDir) {
+            normalizedPath = '~';
+        } else if (path.startsWith(homeDir)) {
+            const boundaryChar = path[homeDir.length];
+            if (boundaryChar === '/' || boundaryChar === '\\') {
+                normalizedPath = '~' + path.slice(homeDir.length);
+            }
         }
 
         // Split path into parts

@@ -12,7 +12,7 @@
 # copilot-statusline
 
 **🎨 A highly customizable status line formatter for GitHub Copilot CLI**
-*Display model info, git branch, token usage, premium requests, and other metrics in your terminal*
+*Display model info, git branch, token usage, AI Credits, and other metrics in your terminal*
 
 [![npm version](https://img.shields.io/npm/v/copilot-statusline.svg)](https://www.npmjs.com/package/copilot-statusline)
 [![npm downloads](https://img.shields.io/npm/dm/copilot-statusline.svg)](https://www.npmjs.com/package/copilot-statusline)
@@ -50,7 +50,7 @@
 
 ## ✨ Features
 
-- **📊 Real-time Metrics** — Model name, git branch, token usage, premium requests, session duration, and more
+- **📊 Real-time Metrics** — Model name, git branch, token usage, AI Credits, session duration, and more
 - **🎨 Fully Customizable** — Choose what to display and customize colors for each widget
 - **⚡ Powerline Support** — Beautiful Powerline-style rendering with arrow separators, caps, and custom themes
 - **📐 Multi-line Support** — Configure any number of independent status lines
@@ -246,8 +246,8 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 |--------|------|-------------|
 | Model | `model` | Copilot model name (e.g., `claude-opus-4.6`) |
 | Version | `version` | Copilot CLI version number |
-| Thinking Effort | `thinking-effort` | Thinking effort level parsed from `display_name` (`low`/`medium`/`high`) |
-| Model Multiplier | `model-multiplier` | Per-request premium multiplier (e.g., `3x`) |
+| Thinking Effort | `thinking-effort` | Thinking effort level from payload fields or `display_name` (`minimal`/`low`/`medium`/`high`/`xhigh`/`max`) |
+| Model Multiplier | `model-multiplier` | Legacy/request-based premium multiplier when present (e.g., `3x`) |
 
 ### Session
 | Widget | Type | Description |

@@ -9,7 +9,7 @@ import { parseDisplayName } from '../utils/display-name-parser';
 
 export class ModelMultiplierWidget implements Widget {
     getDefaultColor(): string { return 'yellow'; }
-    getDescription(): string { return 'Shows the per-request premium multiplier parsed from model.display_name (e.g. 3x)'; }
+    getDescription(): string { return 'Shows the legacy/request-based premium multiplier parsed from model.display_name (e.g. 3x)'; }
     getDisplayName(): string { return 'Model Multiplier'; }
     getCategory(): string { return 'Core'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {

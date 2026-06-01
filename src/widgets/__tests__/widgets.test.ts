@@ -1,3 +1,4 @@
+import * as os from 'node:os';
 import {
     describe,
     expect,
@@ -16,6 +17,7 @@ import { CacheWriteTokensWidget } from '../CacheWriteTokens';
 import { ContextBarWidget } from '../ContextBar';
 import { ContextLengthWidget } from '../ContextLength';
 import { ContextPercentageWidget } from '../ContextPercentage';
+import { CurrentWorkingDirWidget } from '../CurrentWorkingDir';
 import { LastCallInputWidget } from '../LastCallInput';
 import { LastCallOutputWidget } from '../LastCallOutput';
 import { ModelWidget } from '../Model';
@@ -145,6 +147,28 @@ describe('VersionWidget', () => {
 
     it('renders raw version', () => {
         expect(widget.render(item({ rawValue: true }), ctx(postTurnPayload), settings)).toBe('1.0.21');
+    });
+});
+
+describe('CurrentWorkingDirWidget', () => {
+    const widget = new CurrentWorkingDirWidget();
+
+    it('falls back to workspace.current_dir when cwd is missing', () => {
+        expect(widget.render(
+            item(),
+            ctx({ workspace: { current_dir: '/workspace/fallback' } }),
+            settings
+        )).toBe('cwd: /workspace/fallback');
+    });
+
+    it('does not abbreviate sibling home-prefix directories as home in fish style', () => {
+        const siblingPath = `${os.homedir()}-work/project`;
+
+        expect(widget.render(
+            item({ metadata: { fishStyle: 'true' } }),
+            ctx({ cwd: siblingPath }),
+            settings
+        )).not.toContain('~');
     });
 });
 

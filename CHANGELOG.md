@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.19
+
+- Clarified AI Credits, premium request, thinking-effort, and model multiplier documentation for current Copilot payloads.
+- Fixed `current-working-dir` to fall back to `workspace.current_dir` and avoid false `~` abbreviation for sibling home-prefix directories in fish-style mode.
+
 ## 0.1.18
 
 - Aligned `tokens-input` and `tokens-cached` with ccstatusline's non-overlapping token buckets: `In` now excludes cached input, and `Cached:` is cumulative cache read + write tokens.

@@ -90,8 +90,8 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 | Context % | Context % | `context_window.current_context_used_percentage` (live; capped at 100) |
 | Context Bar | Context Bar | `context_window.current_context_used_percentage` for the bar percentage; `current_context_tokens` / `displayed_context_limit` for the `used/total` label |
 | Session Clock | Session Clock | `cost.total_duration_ms` (directly from payload!) |
-| AI Credits | Session Cost | `ai_used.formatted` / `ai_used.total_nano_aiu` |
-| Session Cost | Premium Requests | `cost.total_premium_requests` (replaces USD cost) |
+| Session Cost | AI Credits | `ai_used.formatted` / `ai_used.total_nano_aiu` |
+| Session Cost | Premium Requests | `cost.total_premium_requests` (legacy/request-based counter) |
 | Git Branch | Git Branch | `git` command (same as ccstatusline) |
 | Git Changes | Git Changes | `cost.total_lines_added + total_lines_removed` or git |
 | Git Insertions | Git Insertions | `cost.total_lines_added` or git |
@@ -119,26 +119,27 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 | **NEW:** Last Call Tokens | Last Call Input/Output | `context_window.last_call_*` (Copilot-unique) |
 | **NEW:** Remaining Tokens | Remaining Tokens | `displayed_context_limit − current_context_tokens` (Copilot-unique; live remaining) |
 
-#### Parsing `model.display_name`
+#### Parsing model effort and multiplier
 
-Copilot embeds both the **thinking effort level** and the **per-request premium cost** inside the `model.display_name` field. The format is:
+Copilot may expose the **thinking effort level** in dedicated payload fields (`thinking_effort_level`, `thinking_effort`, or `reasoning_effort`) or inside `model.display_name`. The widget trusts `thinking_effort_level` first, then falls back through the other payload fields and display-name parsing.
+
+Observed `model.display_name` formats include both the older parenthesized style and the newer middle-dot style:
 
 ```
 "<model-name> [optional tags...] (<multiplier>) (<effort>)"
+"<model-name> · <effort> · <context tier>"
 ```
 
 Examples:
 - `"claude-opus-4.6 (3x) (high)"` → multiplier = `3x`, effort = `high`
 - `"Claude Opus 4.6 (1M context)(Internal only) (high)"` → effort = `high` (multiplier absent in this variant)
+- `"gpt-5.5 · xhigh · 1.1M context"` → effort = `xhigh` (multiplier absent in this variant)
 
-**All parenthesized tokens** are extracted via regex. Then:
+The parser extracts parenthesized tokens and middle-dot / bullet / pipe / comma-separated display segments. Then:
 
-1. **Thinking Effort** — the last `(...)` group matching one of `low` | `medium` | `high`. Possible values:
-   - `low` — Minimal thinking, prioritizes speed
-   - `medium` — Balanced, thinks on harder problems
-   - `high` — Optimal performance, thorough thinking (default)
+1. **Thinking Effort** — the last recognized effort token. Supported display-name values are `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`. Dedicated payload effort fields are normalized more permissively so future upstream values can pass through.
 
-2. **Model Multiplier** (type: `model-multiplier`) — a `(...)` group matching the pattern `\d+x` (e.g. `3x`, `6x`, `1x`). This is the "premium request multiplier" from Copilot's official docs: each interaction consumes this many premium requests. Display label: `Multiplier`, raw value: just `3x`. Pairs naturally with the Model widget in compact layouts:
+2. **Model Multiplier** (type: `model-multiplier`) — an optional group/segment matching the pattern `\d+x` (e.g. `3x`, `6x`, `1x`). This remains useful for legacy/request-based premium request payloads, but current AI Credits payloads may omit it. Display label: `Multiplier`, raw value: just `3x`. Pairs naturally with the Model widget in compact layouts when present:
    ```
    opus-4.6 │ 3x │ ctx 18% │ 15 reqs
    ```
@@ -163,7 +164,7 @@ Examples:
 
 | Widget | Description | Data Source |
 |---|---|---|
-| Model Multiplier | Per-request premium multiplier (e.g. `3x`) — from Copilot's "Model multipliers" | Parsed from `model.display_name` |
+| Model Multiplier | Legacy/request-based premium multiplier when present (e.g. `3x`) | Parsed from `model.display_name` |
 | AI Credits | GitHub AI Credits used this session | `ai_used.formatted` (fallback: `ai_used.total_nano_aiu / 1_000_000_000`) |
 | Premium Requests | Total premium requests consumed this session | `cost.total_premium_requests` |
 | API Calls | Estimated actual API calls this session | `cost.total_premium_requests / multiplier` |
@@ -345,8 +346,8 @@ echo '<json>' | copilot-statusline    # Piped rendering
 - **Widget rendering:** Each widget renders correctly given known context data
 - **Token computation:** Cached token aggregation (read + write), remaining tokens
 - **Session clock:** Formats `total_duration_ms` correctly
-- **Model display:** Parses `display_name` format `"model-id (Nx) (level)"`
-- **Thinking Effort parsing:** Correctly extracts effort level (`low`/`medium`/`high`) from various `display_name` formats; returns null for unrecognized formats
+- **Model display:** Parses legacy `"model-id (Nx) (level)"` and current `"model-id · level · context"` display-name formats
+- **Thinking Effort parsing:** Correctly extracts effort levels (`minimal`/`low`/`medium`/`high`/`xhigh`/`max`) from payload fields and display names; returns null for unrecognized display-name formats
 - **Model Multiplier parsing:** Correctly extracts multiplier (`3x`, `6x`, `1x`) from `display_name`; returns null when absent
 - **API Calls computation:** Correctly divides `total_premium_requests` by multiplier; returns null when multiplier unavailable
 - **Premium Rate computation:** Correctly computes requests/minute; handles zero duration gracefully
