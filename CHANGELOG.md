@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## 0.1.17
+
 - Added an `ai-credits` widget backed by the new Copilot payload `ai_used` fields, and switched the default status line from premium requests to AI Credits for new configs.
+- Removed a bundled absolute path from the publish artifact version fallback.
 
 ## 0.1.16
 
