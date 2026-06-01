@@ -3,18 +3,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const PACKAGE_VERSION = '__PACKAGE_VERSION__';
+const MAX_PACKAGE_SEARCH_DEPTH = 8;
 
 export function getPackageVersion(): string {
     if (/^\d+\.\d+\.\d+/.test(PACKAGE_VERSION)) {
         return PACKAGE_VERSION;
     }
 
-    const possiblePaths = [
-        path.join(__dirname, '..', '..', 'package.json'),
-        path.join(__dirname, '..', 'package.json')
-    ];
+    const envVersion = process.env.npm_package_version;
+    if (envVersion) {
+        return envVersion;
+    }
 
-    for (const packageJsonPath of possiblePaths) {
+    let currentDir = process.cwd();
+    for (let depth = 0; depth < MAX_PACKAGE_SEARCH_DEPTH; depth += 1) {
+        const packageJsonPath = path.join(currentDir, 'package.json');
         try {
             if (fs.existsSync(packageJsonPath)) {
                 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')) as { version?: string };
@@ -23,6 +26,12 @@ export function getPackageVersion(): string {
         } catch {
             // Continue to next path
         }
+
+        const parentDir = path.dirname(currentDir);
+        if (parentDir === currentDir) {
+            break;
+        }
+        currentDir = parentDir;
     }
 
     return '';
