@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.1.20
+
+- Added Copilot CLI 1.0.64 payload compatibility for `allow_all_enabled`.
+- Renamed the AI Credits widget label to `AIC` and aligned it with Copilot's formatted `ai_used` payload value.
+- Hardened config loading and saving with non-destructive invalid-config recovery, atomic writes, and symlink-preserving saves.
+- Hardened git status probing with lock-avoiding subprocess calls and a short-lived persistent cache.
+- Added dim styling support, including dimming only parenthesized spans.
+- Added glyph override support for git widgets.
+- Passed terminal width into custom command widgets and added terminal-width environment overrides.
+- Fixed token formatting near the 1M boundary and tightened context bar token formatting.
+
 ## 0.1.19
 
 - Clarified AI Credits, premium request, thinking-effort, and model multiplier documentation for current Copilot payloads.

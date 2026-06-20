@@ -503,7 +503,7 @@ When terminal width is detected, status lines automatically truncate with ellips
 
 Renders as:
 ```
-Model: gpt-5.5 | Thinking: xhigh | Ctx Used: 2.0% | AI: 12.8 | Session: 1m              ⎇ main
+Model: gpt-5.5 | Thinking: xhigh | Ctx Used: 2.0% | AIC: 12.8 | Session: 1m             ⎇ main
 ```
 
 ### Color Levels

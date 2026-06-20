@@ -155,6 +155,7 @@ describe('CopilotPayloadSchema', () => {
             workspace: { current_dir: '/Users/example/workspace' },
             remote: { connected: false },
             version: '1.0.57-5',
+            allow_all_enabled: false,
             ai_used: {
                 formatted: '12.8',
                 total_nano_aiu: 12791900000
@@ -188,6 +189,7 @@ describe('CopilotPayloadSchema', () => {
         expect(result.success).toBe(true);
         if (result.success) {
             expect(result.data.username).toBeNull();
+            expect(result.data.allow_all_enabled).toBe(false);
             expect(result.data.ai_used?.formatted).toBe('12.8');
             expect(result.data.ai_used?.total_nano_aiu).toBe(12791900000);
         }

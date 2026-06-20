@@ -1,13 +1,23 @@
 import type { RenderContext } from '../types/RenderContext';
 import type {
+    CustomKeybind,
     Widget,
     WidgetEditorDisplay,
+    WidgetEditorProps,
     WidgetItem
 } from '../types/Widget';
 import {
     isInsideGitWorkTree,
     runGit
 } from '../utils/git';
+
+import {
+    getSymbol,
+    getSymbolKeybind,
+    renderSymbolOverrideEditor
+} from './shared/symbol-override';
+
+const DEFAULT_SYMBOL = '⎇';
 
 export class GitWorktreeModeWidget implements Widget {
     getDefaultColor(): string { return 'yellow'; }
@@ -30,7 +40,8 @@ export class GitWorktreeModeWidget implements Widget {
             return null;
         }
 
-        return '⎇';
+        const symbol = getSymbol(item, DEFAULT_SYMBOL);
+        return symbol.length > 0 ? symbol : null;
     }
 
     private isInLinkedWorktree(context: RenderContext): boolean {
@@ -44,6 +55,14 @@ export class GitWorktreeModeWidget implements Widget {
         const normalized = gitDir.replace(/\\/g, '/');
         // linked worktrees live under <repo>/.git/worktrees/<name> or <bare>/worktrees/<name>
         return normalized.includes('/worktrees/');
+    }
+
+    getCustomKeybinds(): CustomKeybind[] {
+        return [getSymbolKeybind()];
+    }
+
+    renderEditor(props: WidgetEditorProps) {
+        return renderSymbolOverrideEditor(props, DEFAULT_SYMBOL);
     }
 
     supportsRawValue(): boolean { return true; }

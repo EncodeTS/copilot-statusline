@@ -4,6 +4,7 @@ import type {
     CustomKeybind,
     Widget,
     WidgetEditorDisplay,
+    WidgetEditorProps,
     WidgetItem
 } from '../types/Widget';
 import {
@@ -24,6 +25,13 @@ import {
     handleToggleHideWhenZeroAction,
     isHideWhenZeroEnabled
 } from './shared/hide-when-zero';
+import {
+    formatSymbolPrefix,
+    getSymbolKeybind,
+    renderSymbolOverrideEditor
+} from './shared/symbol-override';
+
+const DEFAULT_SYMBOL = '⚠';
 
 export class GitConflictsWidget implements Widget {
     getDefaultColor(): string { return 'red'; }
@@ -47,11 +55,12 @@ export class GitConflictsWidget implements Widget {
 
     render(item: WidgetItem, context: RenderContext, _settings: Settings): string | null {
         const hideNoGit = isHideNoGitEnabled(item);
+        const prefix = formatSymbolPrefix(item, DEFAULT_SYMBOL);
 
         if (context.isPreview) {
             if (item.rawValue)
                 return '2';
-            return '⚠ 2';
+            return `${prefix}2`;
         }
 
         if (!isInsideGitWorkTree(context)) {
@@ -68,11 +77,15 @@ export class GitConflictsWidget implements Widget {
             return count.toString();
         }
 
-        return `⚠ ${count}`;
+        return `${prefix}${count}`;
     }
 
     getCustomKeybinds(): CustomKeybind[] {
-        return [...getHideNoGitKeybinds(), ...getHideWhenZeroKeybinds()];
+        return [...getHideNoGitKeybinds(), ...getHideWhenZeroKeybinds(), getSymbolKeybind()];
+    }
+
+    renderEditor(props: WidgetEditorProps) {
+        return renderSymbolOverrideEditor(props, DEFAULT_SYMBOL);
     }
 
     getNumericValue(context: RenderContext, _item: WidgetItem): number | null {

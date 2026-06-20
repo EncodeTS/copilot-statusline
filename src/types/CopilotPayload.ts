@@ -18,6 +18,7 @@ export const CopilotPayloadSchema = z.object({
     workspace: z.object({ current_dir: z.string().optional() }).optional(),
     remote: z.object({ connected: z.boolean().optional() }).optional(),
     version: z.string().optional(),
+    allow_all_enabled: z.boolean().optional(),
     cost: z.object({
         total_api_duration_ms: z.number().optional(),
         total_duration_ms: z.number().optional(),

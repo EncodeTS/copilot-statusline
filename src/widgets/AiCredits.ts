@@ -17,6 +17,7 @@ import {
 import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 const NANO_AI_CREDITS_PER_AI_CREDIT = 1_000_000_000;
+const AI_CREDITS_LABEL = 'AIC: ';
 
 function formatAiCreditsFromNano(totalNanoAiu: number): string {
     const credits = totalNanoAiu / NANO_AI_CREDITS_PER_AI_CREDIT;
@@ -65,7 +66,7 @@ function getAiCreditsValue(context: RenderContext): { formatted: string; numeric
 
 export class AiCreditsWidget implements Widget {
     getDefaultColor(): string { return 'green'; }
-    getDescription(): string { return 'Shows GitHub AI Credits used this session'; }
+    getDescription(): string { return 'Shows GitHub AI Credits (AIC) used this session'; }
     getDisplayName(): string { return 'AI Credits'; }
     getCategory(): string { return 'Session'; }
 
@@ -82,7 +83,7 @@ export class AiCreditsWidget implements Widget {
 
     render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
         if (context.isPreview) {
-            return formatRawOrLabeledValue(item, 'AI: ', '12.8');
+            return formatRawOrLabeledValue(item, AI_CREDITS_LABEL, '12.8');
         }
 
         const value = getAiCreditsValue(context);
@@ -94,7 +95,7 @@ export class AiCreditsWidget implements Widget {
             return null;
         }
 
-        return formatRawOrLabeledValue(item, 'AI: ', value.formatted);
+        return formatRawOrLabeledValue(item, AI_CREDITS_LABEL, value.formatted);
     }
 
     getCustomKeybinds(): CustomKeybind[] {

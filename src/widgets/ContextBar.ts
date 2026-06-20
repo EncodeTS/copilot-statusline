@@ -7,6 +7,7 @@ import type {
     WidgetItem
 } from '../types/Widget';
 import { getContextWindowMetrics } from '../utils/context-window';
+import { formatTokens } from '../utils/format-tokens';
 import { makeUsageProgressBar } from '../utils/progress-bar';
 
 import { renderContextSlider } from './shared/context-slider';
@@ -98,16 +99,16 @@ export class ContextBarWidget implements Widget {
 
         const clampedPercent = Math.max(0, Math.min(100, upstreamPct));
 
-        const usedK = Math.round(used / 1000);
-        const totalK = Math.round(total / 1000);
+        const usedDisplay = formatTokens(used, 0);
+        const totalDisplay = formatTokens(total, 0);
 
         if (isSliderMode(displayMode)) {
             const slider = renderContextSlider('slider-only', clampedPercent);
-            const sliderDisplay = displayMode === 'slider' ? `${slider} ${usedK}k/${totalK}k (${Math.round(clampedPercent)}%)` : slider;
+            const sliderDisplay = displayMode === 'slider' ? `${slider} ${usedDisplay}/${totalDisplay} (${Math.round(clampedPercent)}%)` : slider;
             return item.rawValue ? sliderDisplay : `Context: ${sliderDisplay}`;
         }
 
-        const display = `${makeUsageProgressBar(clampedPercent, barWidth, powerlineMode)} ${usedK}k/${totalK}k (${Math.round(clampedPercent)}%)`;
+        const display = `${makeUsageProgressBar(clampedPercent, barWidth, powerlineMode)} ${usedDisplay}/${totalDisplay} (${Math.round(clampedPercent)}%)`;
 
         return item.rawValue ? display : `Context: ${display}`;
     }

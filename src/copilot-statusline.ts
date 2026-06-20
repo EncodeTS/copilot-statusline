@@ -13,6 +13,7 @@ import {
     saveSettings
 } from './utils/config';
 import { advanceGlobalPowerlineThemeIndex } from './utils/powerline-theme-index';
+import { createRuntimeRenderContext } from './utils/render-context';
 import {
     calculateMaxWidthsFromPreRendered,
     preRenderAllWidgets,
@@ -76,11 +77,7 @@ async function renderMultipleLines(data: CopilotPayload) {
 
     const lines = settings.lines;
 
-    const context: RenderContext = {
-        data,
-        isPreview: false,
-        minimalist: settings.minimalistMode
-    };
+    const context: RenderContext = createRuntimeRenderContext(data, settings);
 
     const preRenderedLines = preRenderAllWidgets(lines, settings, context);
     const preCalculatedMaxWidths = calculateMaxWidthsFromPreRendered(preRenderedLines, settings);

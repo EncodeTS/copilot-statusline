@@ -17,6 +17,7 @@ import type { Settings } from '../types/Settings';
 import type { WidgetItem } from '../types/Widget';
 import { cloneSettings } from '../utils/clone-settings';
 import {
+    getConfigLoadError,
     getConfigPath,
     isCustomConfigPath,
     loadSettings,
@@ -77,6 +78,10 @@ export function getConfirmCancelScreen(confirmDialog: ConfirmDialogState | null)
     return confirmDialog?.cancelScreen ?? 'main';
 }
 
+export function getInvalidConfigSaveWarning(configPath: string, configLoadError: string): string {
+    return `Settings could not be loaded from ${configPath}.\n\nReason: ${configLoadError}\n\nSaving now will overwrite that file with the currently displayed settings. Continue?`;
+}
+
 export const App: React.FC = () => {
     const { exit } = useApp();
     const [settings, setSettings] = useState<Settings | null>(null);
@@ -93,9 +98,11 @@ export const App: React.FC = () => {
     const [fontInstallMessage, setFontInstallMessage] = useState<string | null>(null);
     const [flashMessage, setFlashMessage] = useState<FlashMessage | null>(null);
     const [previewIsTruncated, setPreviewIsTruncated] = useState(false);
+    const [configLoadError, setConfigLoadError] = useState<string | null>(null);
 
     useEffect(() => {
         void loadSettings().then((loadedSettings) => {
+            setConfigLoadError(getConfigLoadError());
             chalk.level = loadedSettings.colorLevel;
             setSettings(loadedSettings);
             setOriginalSettings(cloneSettings(loadedSettings));
@@ -135,23 +142,59 @@ export const App: React.FC = () => {
         }
     }, [flashMessage]);
 
+    const saveCurrentSettings = async (options: { exitAfterSave?: boolean; forceOverwriteInvalidConfig?: boolean } = {}) => {
+        if (!settings) {
+            return;
+        }
+
+        if (configLoadError && !options.forceOverwriteInvalidConfig) {
+            const returnScreen = screen === 'confirm' ? 'main' : screen;
+            setConfirmDialog({
+                message: getInvalidConfigSaveWarning(getConfigPath(), configLoadError),
+                cancelScreen: returnScreen,
+                action: async () => {
+                    await saveCurrentSettings({
+                        ...options,
+                        forceOverwriteInvalidConfig: true
+                    });
+                    setScreen(returnScreen);
+                    setConfirmDialog(null);
+                }
+            });
+            setScreen('confirm');
+            return;
+        }
+
+        try {
+            await saveSettings(settings);
+            setConfigLoadError(null);
+            setOriginalSettings(cloneSettings(settings));
+            setHasChanges(false);
+            try {
+                installStatusLine();
+            } catch { /* ignore install errors on save */ }
+
+            if (options.exitAfterSave) {
+                exit();
+                return;
+            }
+
+            setFlashMessage({
+                text: '✓ Configuration saved & Copilot CLI updated',
+                color: 'green'
+            });
+        } catch (e) {
+            const errorMsg = e instanceof Error ? e.message : String(e);
+            setFlashMessage({ text: `✗ ${errorMsg}`, color: 'red' });
+        }
+    };
+
     useInput((input, key) => {
         if (key.ctrl && input === 'c') {
             exit();
         }
         if (key.ctrl && input === 's' && settings) {
-            void (async () => {
-                await saveSettings(settings);
-                setOriginalSettings(cloneSettings(settings));
-                setHasChanges(false);
-                try {
-                    installStatusLine();
-                } catch { /* ignore */ }
-                setFlashMessage({
-                    text: '✓ Configuration saved & Copilot CLI updated',
-                    color: 'green'
-                });
-            })();
+            void saveCurrentSettings();
         }
     });
 
@@ -224,14 +267,7 @@ export const App: React.FC = () => {
                 handleInstallUninstall();
                 break;
             case 'save':
-                await saveSettings(settings);
-                setOriginalSettings(cloneSettings(settings));
-                setHasChanges(false);
-                // Auto-install launcher script to Copilot CLI on save
-                try {
-                    installStatusLine();
-                } catch { /* ignore install errors on save */ }
-                exit();
+                await saveCurrentSettings({ exitAfterSave: true });
                 break;
             case 'exit':
                 exit();

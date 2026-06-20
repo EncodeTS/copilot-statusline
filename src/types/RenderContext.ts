@@ -8,6 +8,7 @@ export interface RenderContext {
     lineIndex?: number;
     globalSeparatorIndex?: number;
     globalPowerlineThemeIndex?: number;
+    gitCacheTtlSeconds?: number;
 
     // For git widget thresholds
     gitData?: {

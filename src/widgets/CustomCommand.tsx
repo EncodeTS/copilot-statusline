@@ -1,9 +1,9 @@
-import { execSync } from 'child_process';
 import {
     Box,
     Text,
     useInput
 } from 'ink';
+import * as childProcess from 'node:child_process';
 import React, { useState } from 'react';
 
 import type { RenderContext } from '../types/RenderContext';
@@ -60,13 +60,18 @@ export class CustomCommandWidget implements Widget {
         } else if (item.commandPath && context.data) {
             try {
                 const timeout = item.timeout ?? 1000;
-                const jsonInput = JSON.stringify(context.data);
-                let output = execSync(item.commandPath, {
+                const jsonInput = JSON.stringify(
+                    typeof context.terminalWidth === 'number'
+                        ? { ...context.data, terminal_width: context.terminalWidth }
+                        : context.data
+                );
+                let output = childProcess.execSync(item.commandPath, {
                     encoding: 'utf8',
                     input: jsonInput,
                     timeout: timeout,
                     stdio: ['pipe', 'pipe', 'ignore'],
-                    env: process.env
+                    env: process.env,
+                    windowsHide: true
                 }).trim();
 
                 // Strip ANSI codes if preserveColors is false

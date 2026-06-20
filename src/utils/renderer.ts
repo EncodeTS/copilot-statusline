@@ -14,22 +14,20 @@ import {
 } from './ansi';
 import {
     applyColors,
+    applyParensDim,
     bgToFg,
     getColorAnsiCode,
     getPowerlineTheme
 } from './colors';
 import { calculateContextPercentage } from './context-percentage';
+import { formatTokens as formatTokenCount } from './format-tokens';
 import { PROGRESS_BAR_FG_RESTORE } from './progress-bar';
 import { getTerminalWidth } from './terminal';
 import { getWidget } from './widgets';
 
 // Helper function to format token counts
-export function formatTokens(count: number): string {
-    if (count >= 1000000)
-        return `${(count / 1000000).toFixed(1)}M`;
-    if (count >= 1000)
-        return `${(count / 1000).toFixed(1)}k`;
-    return count.toString();
+export function formatTokens(count: number, decimals = 1): string {
+    return formatTokenCount(count, decimals);
 }
 
 function resolveEffectiveTerminalWidth(
@@ -300,9 +298,10 @@ function renderPowerlineStatusLine(
         // Apply colors to widget content using raw ANSI codes for powerline mode
         // This avoids reset codes that interfere with separator rendering
         const shouldBold = (settings.globalBold) || widget.widget.bold;
+        const shouldDim = widget.widget.dim === true;
 
         // Check if we need a separator after this widget
-        const needsSeparator = i < widgetElements.length - 1 && separators.length > 0 && nextWidget && !widget.widget.merge;
+        const needsSeparator = i < widgetElements.length - 1 && separators.length > 0 && Boolean(nextWidget) && !widget.widget.merge;
 
         let widgetContent = '';
 
@@ -312,19 +311,25 @@ function renderPowerlineStatusLine(
         if (shouldBold && !isPreserveColors) {
             widgetContent += '\x1b[1m';
         }
+        if (shouldDim && !isPreserveColors) {
+            widgetContent += '\x1b[2m';
+        }
+        let styledContent = widget.widget.dim === 'parens' && !isPreserveColors
+            ? applyParensDim(widget.content, shouldBold)
+            : widget.content;
         if (widget.fgColor && !isPreserveColors) {
             const fgCode = getColorAnsiCode(widget.fgColor, colorLevel, false);
             widgetContent += fgCode;
             // Replace progress bar fg restore placeholder with actual theme fg code
-            if (widget.content.includes(PROGRESS_BAR_FG_RESTORE)) {
-                widget.content = widget.content.replace(PROGRESS_BAR_FG_RESTORE, fgCode);
+            if (styledContent.includes(PROGRESS_BAR_FG_RESTORE)) {
+                styledContent = styledContent.replace(PROGRESS_BAR_FG_RESTORE, fgCode);
             }
         }
         // Always apply background for consistency in powerline mode
         if (widget.bgColor) {
             widgetContent += getColorAnsiCode(widget.bgColor, colorLevel, true);
         }
-        widgetContent += widget.content;
+        widgetContent += styledContent;
         // Reset colors after content
         // For custom commands with preserveColors, also reset text attributes like dim
         if (isPreserveColors) {
@@ -332,10 +337,14 @@ function renderPowerlineStatusLine(
             widgetContent += '\x1b[0m';
         } else {
             widgetContent += '\x1b[49m\x1b[39m';
-            // Only reset bold if there's no separator following AND no end cap
+            // Dim is scoped to widget text. Reset before separators/end caps so
+            // faint intensity cannot leak forward; re-assert bold if needed.
             const isLastWidget = i === widgetElements.length - 1;
             const hasEndCap = endCaps.length > 0 && endCaps[capLineIndex % endCaps.length];
-            if (shouldBold && !needsSeparator && !(isLastWidget && hasEndCap)) {
+            const hasBoundaryAfterWidget = needsSeparator || (isLastWidget && Boolean(hasEndCap));
+            if (shouldDim && shouldBold && hasBoundaryAfterWidget) {
+                widgetContent += '\x1b[22;1m';
+            } else if (shouldDim || (shouldBold && !hasBoundaryAfterWidget)) {
                 widgetContent += '\x1b[22m';
             }
         }
@@ -344,6 +353,11 @@ function renderPowerlineStatusLine(
 
         // Add separator between widgets (not after last one, and not if current widget is merged with next)
         if (needsSeparator) {
+            const separatorNextWidget = nextWidget;
+            if (!separatorNextWidget) {
+                continue;
+            }
+
             // Determine which separator to use based on global position
             // Use separators in order, using the last one for all remaining positions
             const globalIndex = globalSeparatorOffset + i;
@@ -363,30 +377,30 @@ function renderPowerlineStatusLine(
             let separatorOutput: string;
 
             // Check if adjacent widgets have the same background color
-            const sameBackground = widget.bgColor && nextWidget.bgColor && widget.bgColor === nextWidget.bgColor;
+            const sameBackground = widget.bgColor && separatorNextWidget.bgColor && widget.bgColor === separatorNextWidget.bgColor;
 
             if (shouldInvert) {
                 // Inverted: swap fg/bg logic
-                if (widget.bgColor && nextWidget.bgColor) {
+                if (widget.bgColor && separatorNextWidget.bgColor) {
                     if (sameBackground) {
                         // Same background: use next widget's foreground color
-                        const fgColor = nextWidget.fgColor;
+                        const fgColor = separatorNextWidget.fgColor;
                         const fgCode = getColorAnsiCode(fgColor, colorLevel, false);
                         const bgCode = getColorAnsiCode(widget.bgColor, colorLevel, true);
                         separatorOutput = fgCode + bgCode + separator + '\x1b[39m\x1b[49m';
                     } else {
                         // Different backgrounds: use standard inverted logic
-                        const fgColor = bgToFg(nextWidget.bgColor);
+                        const fgColor = bgToFg(separatorNextWidget.bgColor);
                         const fgCode = getColorAnsiCode(fgColor, colorLevel, false);
                         const bgCode = getColorAnsiCode(widget.bgColor, colorLevel, true);
                         separatorOutput = fgCode + bgCode + separator + '\x1b[39m\x1b[49m';
                     }
-                } else if (widget.bgColor && !nextWidget.bgColor) {
+                } else if (widget.bgColor && !separatorNextWidget.bgColor) {
                     const fgColor = bgToFg(widget.bgColor);
                     const fgCode = getColorAnsiCode(fgColor, colorLevel, false);
                     separatorOutput = fgCode + separator + '\x1b[39m';
-                } else if (!widget.bgColor && nextWidget.bgColor) {
-                    const fgColor = bgToFg(nextWidget.bgColor);
+                } else if (!widget.bgColor && separatorNextWidget.bgColor) {
+                    const fgColor = bgToFg(separatorNextWidget.bgColor);
                     const fgCode = getColorAnsiCode(fgColor, colorLevel, false);
                     separatorOutput = fgCode + separator + '\x1b[39m';
                 } else {
@@ -394,28 +408,28 @@ function renderPowerlineStatusLine(
                 }
             } else {
                 // Normal (not inverted)
-                if (widget.bgColor && nextWidget.bgColor) {
+                if (widget.bgColor && separatorNextWidget.bgColor) {
                     if (sameBackground) {
                         // Same background: use previous widget's foreground color
                         const fgColor = widget.fgColor;
                         const fgCode = getColorAnsiCode(fgColor, colorLevel, false);
-                        const bgCode = getColorAnsiCode(nextWidget.bgColor, colorLevel, true);
+                        const bgCode = getColorAnsiCode(separatorNextWidget.bgColor, colorLevel, true);
                         separatorOutput = fgCode + bgCode + separator + '\x1b[39m\x1b[49m';
                     } else {
                         // Different backgrounds: use standard logic
                         const fgColor = bgToFg(widget.bgColor);
                         const fgCode = getColorAnsiCode(fgColor, colorLevel, false);
-                        const bgCode = getColorAnsiCode(nextWidget.bgColor, colorLevel, true);
+                        const bgCode = getColorAnsiCode(separatorNextWidget.bgColor, colorLevel, true);
                         separatorOutput = fgCode + bgCode + separator + '\x1b[39m\x1b[49m';
                     }
-                } else if (widget.bgColor && !nextWidget.bgColor) {
+                } else if (widget.bgColor && !separatorNextWidget.bgColor) {
                     // Only previous widget has background
                     const fgColor = bgToFg(widget.bgColor);
                     const fgCode = getColorAnsiCode(fgColor, colorLevel, false);
                     separatorOutput = fgCode + separator + '\x1b[39m';
-                } else if (!widget.bgColor && nextWidget.bgColor) {
+                } else if (!widget.bgColor && separatorNextWidget.bgColor) {
                     // Only next widget has background
-                    const fgColor = bgToFg(nextWidget.bgColor);
+                    const fgColor = bgToFg(separatorNextWidget.bgColor);
                     const fgCode = getColorAnsiCode(fgColor, colorLevel, false);
                     separatorOutput = fgCode + separator + '\x1b[39m';
                 } else {
@@ -640,8 +654,8 @@ export function renderStatusLine(
             preCalculatedMaxWidths
         );
 
-    // Helper to apply colors with optional background and bold override
-    const applyColorsWithOverride = (text: string, foregroundColor?: string, backgroundColor?: string, bold?: boolean): string => {
+    // Helper to apply colors with optional background, bold, and dim override
+    const applyColorsWithOverride = (text: string, foregroundColor?: string, backgroundColor?: string, bold?: boolean, dim?: boolean | 'parens'): string => {
         // Override foreground color takes precedence over EVERYTHING, including passed foreground color
         let fgColor = foregroundColor;
         if (settings.overrideForegroundColor && settings.overrideForegroundColor !== 'none') {
@@ -655,7 +669,7 @@ export function renderStatusLine(
         }
 
         const shouldBold = (settings.globalBold) || bold;
-        return applyColors(text, fgColor, bgColor, shouldBold, colorLevel);
+        return applyColors(text, fgColor, bgColor, shouldBold, colorLevel, dim);
     };
 
     const detectedWidth = context.terminalWidth ?? getTerminalWidth();
@@ -697,6 +711,7 @@ export function renderStatusLine(
             let separatorColor = widget.color ?? 'gray';
             let separatorBg = widget.backgroundColor;
             let separatorBold = widget.bold;
+            let separatorDim = widget.dim;
 
             if (settings.inheritSeparatorColors && i > 0 && !widget.color && !widget.backgroundColor) {
                 // Only inherit if the separator doesn't have explicit colors set
@@ -711,10 +726,11 @@ export function renderStatusLine(
                     separatorColor = widgetColor;
                     separatorBg = prevWidget.backgroundColor;
                     separatorBold = prevWidget.bold;
+                    separatorDim = prevWidget.dim;
                 }
             }
 
-            elements.push({ content: applyColorsWithOverride(formattedSep, separatorColor, separatorBg, separatorBold), type: 'separator', widget });
+            elements.push({ content: applyColorsWithOverride(formattedSep, separatorColor, separatorBg, separatorBold, separatorDim), type: 'separator', widget });
             continue;
         }
 
@@ -756,7 +772,7 @@ export function renderStatusLine(
                 } else {
                     // Normal widget rendering with colors
                     elements.push({
-                        content: applyColorsWithOverride(widgetText, widget.color ?? defaultColor, widget.backgroundColor, widget.bold),
+                        content: applyColorsWithOverride(widgetText, widget.color ?? defaultColor, widget.backgroundColor, widget.bold, widget.dim),
                         type: widget.type,
                         widget
                     });
@@ -801,7 +817,7 @@ export function renderStatusLine(
                         const widgetImpl = getWidget(prevElem.widget.type);
                         widgetColor = widgetImpl ? widgetImpl.getDefaultColor() : 'white';
                     }
-                    const coloredSep = applyColorsWithOverride(defaultSep, widgetColor, prevElem.widget.backgroundColor, prevElem.widget.bold);
+                    const coloredSep = applyColorsWithOverride(defaultSep, widgetColor, prevElem.widget.backgroundColor, prevElem.widget.bold, prevElem.widget.dim);
                     finalElements.push(coloredSep);
                 } else {
                     finalElements.push(defaultSep);

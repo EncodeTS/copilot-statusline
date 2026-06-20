@@ -38,6 +38,11 @@ export function getPackageVersion(): string {
 }
 
 function probeTerminalWidth(): number | null {
+    const override = getTerminalWidthOverride();
+    if (override !== null) {
+        return override;
+    }
+
     if (process.platform === 'win32') {
         return null;
     }
@@ -65,12 +70,29 @@ function probeTerminalWidth(): number | null {
     try {
         const width = execSync('tput cols 2>/dev/null', {
             encoding: 'utf8',
-            stdio: ['pipe', 'pipe', 'ignore']
+            stdio: ['pipe', 'pipe', 'ignore'],
+            windowsHide: true
         }).trim();
 
         return parsePositiveInteger(width);
     } catch {
         // tput also failed
+    }
+
+    return null;
+}
+
+function getTerminalWidthOverride(): number | null {
+    for (const key of ['COPILOT_STATUSLINE_WIDTH', 'CCSTATUSLINE_WIDTH']) {
+        const raw = process.env[key];
+        if (!raw) {
+            continue;
+        }
+
+        const parsed = parsePositiveInteger(raw);
+        if (parsed !== null) {
+            return parsed;
+        }
     }
 
     return null;
@@ -90,7 +112,8 @@ function getParentProcessId(pid: number): number | null {
         const parentPidOutput = execSync(`ps -o ppid= -p ${pid}`, {
             encoding: 'utf8',
             stdio: ['pipe', 'pipe', 'ignore'],
-            shell: '/bin/sh'
+            shell: '/bin/sh',
+            windowsHide: true
         }).trim();
 
         return parsePositiveInteger(parentPidOutput);
@@ -104,7 +127,8 @@ function getTTYForProcess(pid: number): string | null {
         const tty = execSync(`ps -o tty= -p ${pid}`, {
             encoding: 'utf8',
             stdio: ['pipe', 'pipe', 'ignore'],
-            shell: '/bin/sh'
+            shell: '/bin/sh',
+            windowsHide: true
         }).replace(/\s+/g, '');
 
         if (!tty || tty === '??' || tty === '?') {
@@ -118,20 +142,32 @@ function getTTYForProcess(pid: number): string | null {
 }
 
 function getWidthForTTY(tty: string): number | null {
-    try {
-        const width = execSync(
-            `stty size < /dev/${tty} | awk '{print $2}'`,
-            {
+    const devicePath = `/dev/${tty}`;
+    const attempts = [
+        `stty -F ${devicePath} size`,
+        `stty -f ${devicePath} size`,
+        `stty size < ${devicePath}`
+    ];
+
+    for (const cmd of attempts) {
+        try {
+            const width = execSync(`${cmd} 2>/dev/null | awk '{print $2}'`, {
                 encoding: 'utf8',
                 stdio: ['pipe', 'pipe', 'ignore'],
-                shell: '/bin/sh'
-            }
-        ).trim();
+                shell: '/bin/sh',
+                windowsHide: true
+            }).trim();
 
-        return parsePositiveInteger(width);
-    } catch {
-        return null;
+            const parsed = parsePositiveInteger(width);
+            if (parsed !== null) {
+                return parsed;
+            }
+        } catch {
+            // Try the next strategy.
+        }
     }
+
+    return null;
 }
 
 export function getTerminalWidth(): number | null {

@@ -438,7 +438,7 @@ describe('AiCreditsWidget', () => {
     const widget = new AiCreditsWidget();
 
     it('renders GitHub AI Credits from the formatted payload value', () => {
-        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('AI: 12.8');
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('AIC: 12.8');
     });
 
     it('renders raw AI Credits', () => {
@@ -453,7 +453,7 @@ describe('AiCreditsWidget', () => {
                 ai_used: { total_nano_aiu: 11444500000 }
             }),
             settings
-        )).toBe('AI: 11.4');
+        )).toBe('AIC: 11.4');
     });
 
     it('can hide zero values', () => {

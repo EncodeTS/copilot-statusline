@@ -14,7 +14,8 @@
   "remote": {
     "connected": false
   },
-  "version": "1.0.57-5",
+  "version": "1.0.64-1",
+  "allow_all_enabled": false,
   "ai_used": {
     "formatted": "12.8",
     "total_nano_aiu": 12791900000

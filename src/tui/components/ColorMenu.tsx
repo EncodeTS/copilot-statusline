@@ -22,6 +22,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import {
     clearAllWidgetStyling,
     cycleWidgetColor,
+    cycleWidgetDim,
     resetWidgetStyling,
     setWidgetColor,
     toggleWidgetBold
@@ -190,6 +191,15 @@ export const ColorMenu: React.FC<ColorMenuProps> = ({ widgets, lineIndex, settin
                     onUpdate(newItems);
                 }
             }
+        } else if (input === 'd' || input === 'D') {
+            if (highlightedItemId && highlightedItemId !== 'back') {
+                // Cycle dim for the highlighted item: off -> whole -> parens -> off
+                const selectedWidget = colorableWidgets.find(widget => widget.id === highlightedItemId);
+                if (selectedWidget) {
+                    const newItems = cycleWidgetDim(widgets, selectedWidget.id);
+                    onUpdate(newItems);
+                }
+            }
         } else if (input === 'r' || input === 'R') {
             if (highlightedItemId && highlightedItemId !== 'back') {
                 // Reset all styling (color, background, and bold) for the highlighted item
@@ -269,7 +279,7 @@ export const ColorMenu: React.FC<ColorMenuProps> = ({ widgets, lineIndex, settin
                 defaultColor = widgetImpl.getDefaultColor();
             }
         }
-        const styledLabel = applyColors(label, widget.color ?? defaultColor, widget.backgroundColor, widget.bold, level);
+        const styledLabel = applyColors(label, widget.color ?? defaultColor, widget.backgroundColor, widget.bold, level, widget.dim);
         return {
             label: styledLabel,
             value: widget.id
@@ -346,6 +356,11 @@ export const ColorMenu: React.FC<ColorMenuProps> = ({ widgets, lineIndex, settin
             colorDisplay = applyColors(displayName, currentColor, undefined, false, level);
         }
     }
+    const styleIndicators = [
+        selectedWidget?.bold ? '[BOLD]' : null,
+        selectedWidget?.dim === true ? '[DIM]' : null,
+        selectedWidget?.dim === 'parens' ? '[DIM ()]' : null
+    ].filter(indicator => indicator !== null).join(' ');
 
     // Show confirmation dialog if clearing all colors
     if (showClearConfirm) {
@@ -431,7 +446,7 @@ export const ColorMenu: React.FC<ColorMenuProps> = ({ widgets, lineIndex, settin
                         ↑↓ to select, ←→ to cycle
                         {' '}
                         {editingBackground ? 'background' : 'foreground'}
-                        , (f) to toggle bg/fg, (b)old,
+                        , (f) to toggle bg/fg, (b)old, (d)im,
                         {settings.colorLevel === 3 ? ' (h)ex,' : settings.colorLevel === 2 ? ' (a)nsi256,' : ''}
                         {' '}
                         (r)eset, (c)lear all, ESC to go back
@@ -454,7 +469,7 @@ export const ColorMenu: React.FC<ColorMenuProps> = ({ widgets, lineIndex, settin
                                 ):
                                 {' '}
                                 {colorDisplay}
-                                {selectedWidget.bold && chalk.bold(' [BOLD]')}
+                                {styleIndicators && ` ${styleIndicators}`}
                             </Text>
                         </Box>
                     ) : (
