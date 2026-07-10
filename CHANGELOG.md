@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.22
+
+- Fixed TUI install detection and uninstall to use Copilot CLI's current `~/.copilot/settings.json` / `COPILOT_HOME`, enable custom footer output, and preserve JSONC comments, permissions, symlinks, unrelated status lines, and other settings.
+- Updated npm publishing actions to their current Node 24-backed major versions.
+
 ## 0.1.21
 
 - Added Copilot payload passthrough handling so future fields remain available to custom commands.

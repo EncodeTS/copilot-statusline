@@ -280,7 +280,7 @@ copilot_statusline/
 │       ├── colors.ts                 # Color system (from ccstatusline)
 │       ├── ansi.ts                   # ANSI helpers (from ccstatusline)
 │       ├── git.ts                    # Git integration (from ccstatusline)
-│       ├── copilot-settings.ts       # Integration with ~/.copilot/config.json
+│       ├── copilot-settings.ts       # Integration with ~/.copilot/settings.json
 │       ├── powerline.ts              # Powerline support (from ccstatusline)
 │       └── model-context.ts          # Model context detection
 ├── package.json
@@ -293,7 +293,7 @@ copilot_statusline/
 ### Key Adaptation Points
 
 1. **Config location:** `~/.config/copilot-statusline/settings.json` (not ccstatusline)
-2. **Copilot integration:** `~/.copilot/config.json` (not `~/.claude/settings.json`)
+2. **Copilot integration:** `~/.copilot/settings.json` (not `~/.claude/settings.json`), including `footer.showCustom`
 3. **Payload parsing:** Copilot-specific Zod schema (different from StatusJSON)
 4. **No transcript parsing:** Copilot provides tokens directly in payload — no JSONL parsing needed
 5. **No speed metrics:** No per-request timing data available
@@ -344,7 +344,7 @@ copilot-statusline                    # TUI configuration
 copilot-statusline --version          # Print package version and exit
 echo '<json>' | copilot-statusline    # Piped rendering
 
-# Copilot integration (~/.copilot/config.json)
+# Copilot integration (~/.copilot/settings.json)
 {
   "statusLine": {
     "type": "command",

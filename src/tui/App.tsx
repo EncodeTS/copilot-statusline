@@ -24,8 +24,9 @@ import {
     saveSettings
 } from '../utils/config';
 import {
+    canAutoInstallStatusLine,
     getCopilotConfigPath,
-    getExistingStatusLine,
+    getStatusLineState,
     installStatusLine,
     isInstalled,
     uninstallStatusLine
@@ -170,9 +171,11 @@ export const App: React.FC = () => {
             setConfigLoadError(null);
             setOriginalSettings(cloneSettings(settings));
             setHasChanges(false);
-            try {
+            const canInstall = canAutoInstallStatusLine();
+            if (canInstall) {
                 installStatusLine();
-            } catch { /* ignore install errors on save */ }
+                setIsCopilotInstalled(true);
+            }
 
             if (options.exitAfterSave) {
                 exit();
@@ -180,7 +183,9 @@ export const App: React.FC = () => {
             }
 
             setFlashMessage({
-                text: '✓ Configuration saved & Copilot CLI updated',
+                text: canInstall
+                    ? '✓ Configuration saved & Copilot CLI updated'
+                    : '✓ Configuration saved; existing Copilot status line unchanged',
                 color: 'green'
             });
         } catch (e) {
@@ -199,7 +204,18 @@ export const App: React.FC = () => {
     });
 
     const handleInstall = useCallback(() => {
-        const existing = getExistingStatusLine();
+        let existing: string | null;
+        try {
+            const state = getStatusLineState();
+            existing = state.kind === 'absent'
+                ? null
+                : (state.command ?? '[unsupported statusLine setting]');
+        } catch (e) {
+            const errorMsg = e instanceof Error ? e.message : String(e);
+            setFlashMessage({ text: `✗ ${errorMsg}`, color: 'red' });
+            setScreen('main');
+            return;
+        }
 
         const message = existing
             ? `A status line is already configured: "${existing}"\n\nReplace with copilot-statusline?\nA launcher script will be created at ~/.copilot/statusline.sh`
@@ -233,8 +249,14 @@ export const App: React.FC = () => {
             setConfirmDialog({
                 message: `This will remove copilot-statusline from ${getCopilotConfigPath()}. Continue?`,
                 action: async () => {
-                    uninstallStatusLine();
-                    setIsCopilotInstalled(false);
+                    try {
+                        uninstallStatusLine();
+                        setIsCopilotInstalled(false);
+                        setFlashMessage({ text: '✓ Uninstalled from Copilot CLI', color: 'green' });
+                    } catch (e) {
+                        const errorMsg = e instanceof Error ? e.message : String(e);
+                        setFlashMessage({ text: `✗ ${errorMsg}`, color: 'red' });
+                    }
                     setScreen('main');
                     setConfirmDialog(null);
                     return Promise.resolve();

@@ -80,7 +80,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             value: 'install',
             description: isCopilotInstalled
                 ? 'Remove copilot-statusline from your Copilot CLI config'
-                : 'Add copilot-statusline to your Copilot CLI config (~/.copilot/config.json)'
+                : 'Add copilot-statusline to your Copilot CLI settings (~/.copilot/settings.json)'
         }
     ];
 

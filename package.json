@@ -1,6 +1,6 @@
 {
   "name": "copilot-statusline",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "A customizable status line formatter for GitHub Copilot CLI — based on ccstatusline",
   "main": "./dist/copilot-statusline.js",
   "module": "./dist/copilot-statusline.js",
@@ -43,6 +43,7 @@
     "globals": "^17.3.0",
     "ink": "6.2.0",
     "ink-select-input": "^6.2.0",
+    "jsonc-parser": "^3.3.1",
     "react": "^19.1.1",
     "react-devtools-core": "^7.0.1",
     "string-width": "^7.2.0",

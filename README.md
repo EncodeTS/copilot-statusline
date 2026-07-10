@@ -92,11 +92,12 @@ The interactive configuration tool provides a terminal UI where you can:
 ### Copilot CLI Integration
 
 When you install from the TUI, copilot-statusline creates a launcher script at `~/.copilot/statusline.sh` that uses `bunx`/`npx` to always run the latest version — **no manual upgrades needed**.
+The installer also enables `footer.showCustom` while preserving your other Copilot footer settings.
 
 It also writes to your Copilot CLI config:
 
 ```json
-// ~/.copilot/config.json
+// ~/.copilot/settings.json
 {
   "statusLine": {
     "type": "command",
@@ -108,7 +109,7 @@ It also writes to your Copilot CLI config:
 
 > 💡 **Auto-upgrade:** The launcher script runs `bunx -y copilot-statusline@latest` (or `npx` if you used npm to run the TUI) under the hood, so you always get the latest version automatically.
 
-**Settings location:** `~/.copilot/config.json` (or use `--config-dir` with Copilot CLI to change)
+**Settings location:** `~/.copilot/settings.json` (or set `COPILOT_HOME` to change the Copilot home directory)
 
 ---
 
@@ -174,7 +175,7 @@ For the best experience:
 
 ### Windows Copilot CLI Integration
 
-**Config location:** `%USERPROFILE%\.copilot\config.json`
+**Config location:** `%USERPROFILE%\.copilot\settings.json`
 
 ```json
 {
@@ -478,7 +479,7 @@ When terminal width is detected, status lines automatically truncate with ellips
 | File | Purpose |
 |------|---------|
 | `~/.config/copilot-statusline/settings.json` | copilot-statusline widget/render settings |
-| `~/.copilot/config.json` | Copilot CLI config (`statusLine` command object) |
+| `~/.copilot/settings.json` | Copilot CLI settings (`statusLine` command object) |
 
 ### Example Configuration
 
@@ -597,7 +598,7 @@ copilot-statusline and ccstatusline are **fully independent** — they use separ
 | **Target** | Claude Code CLI | GitHub Copilot CLI |
 | **Input format** | Claude Code StatusJSON | Copilot JSON payload |
 | **Config path** | `~/.config/ccstatusline/` | `~/.config/copilot-statusline/` |
-| **CLI integration** | `~/.claude/settings.json` | `~/.copilot/config.json` |
+| **CLI integration** | `~/.claude/settings.json` | `~/.copilot/settings.json` |
 | **npm package** | `ccstatusline` | `copilot-statusline` |
 | **Cost tracking** | USD session cost | GitHub AI Credits / premium requests counter |
 | **Speed metrics** | Input/output/total token speed | Not available (no per-request timing data) |
