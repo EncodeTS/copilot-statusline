@@ -20,6 +20,7 @@ import {
     renderStatusLine
 } from './utils/renderer';
 import { advanceGlobalSeparatorIndex } from './utils/separator-index';
+import { getPackageVersion } from './utils/terminal';
 
 async function readStdin(): Promise<string | null> {
     if (process.stdin.isTTY) {
@@ -148,6 +149,11 @@ function parseConfigArg(): string | undefined {
 }
 
 async function main() {
+    if (process.argv.includes('--version')) {
+        console.log(getPackageVersion());
+        return;
+    }
+
     initConfigPath(parseConfigArg());
 
     if (!process.stdin.isTTY) {

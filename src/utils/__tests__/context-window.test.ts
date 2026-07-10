@@ -41,6 +41,8 @@ describe('getContextWindowMetrics', () => {
         expect(result.totalInputTokens).toBe(0);
         expect(result.nonCachedInputTokens).toBe(0);
         expect(result.cachedTokens).toBe(0);
+        expect(result.lastCallInputTokens).toBeNull();
+        expect(result.lastCallOutputTokens).toBeNull();
     });
 
     it('exposes current_context_tokens and current_context_used_percentage from payload', () => {
@@ -145,6 +147,42 @@ describe('getContextWindowMetrics', () => {
         const result = getContextWindowMetrics(data);
         expect(result.cachedTokens).toBeNull();
         expect(result.nonCachedInputTokens).toBeNull();
+    });
+
+    it('does not treat cumulative current_usage as last-call data', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                last_call_input_tokens: 0,
+                last_call_output_tokens: 0,
+                current_usage: {
+                    input_tokens: 21177,
+                    output_tokens: 5,
+                    cache_creation_input_tokens: 0,
+                    cache_read_input_tokens: 0
+                }
+            }
+        };
+
+        const result = getContextWindowMetrics(data);
+        expect(result.lastCallInputTokens).toBeNull();
+        expect(result.lastCallOutputTokens).toBeNull();
+    });
+
+    it('uses positive dedicated last_call fields', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                last_call_input_tokens: 35188,
+                last_call_output_tokens: 12,
+                current_usage: {
+                    input_tokens: 70280,
+                    output_tokens: 30
+                }
+            }
+        };
+
+        const result = getContextWindowMetrics(data);
+        expect(result.lastCallInputTokens).toBe(35188);
+        expect(result.lastCallOutputTokens).toBe(12);
     });
 
     it('falls back totalTokens to total_input + total_output when total_tokens absent', () => {

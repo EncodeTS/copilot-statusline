@@ -12,7 +12,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class ContextWindowWidget implements Widget {
     getDefaultColor(): string { return 'brightBlack'; }
-    getDescription(): string { return 'Shows the model\'s context window size (max tokens)'; }
+    getDescription(): string { return 'Shows the active context limit reported by Copilot'; }
     getDisplayName(): string { return 'Context Window'; }
     getCategory(): string { return 'Context'; }
     getEditorDisplay(_item: WidgetItem): WidgetEditorDisplay {

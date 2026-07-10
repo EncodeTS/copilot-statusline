@@ -14,9 +14,9 @@ export const CopilotPayloadSchema = z.object({
         thinking_effort: z.string().nullable().optional(),
         thinking_effort_level: z.string().nullable().optional(),
         reasoning_effort: z.string().nullable().optional()
-    }).optional(),
-    workspace: z.object({ current_dir: z.string().optional() }).optional(),
-    remote: z.object({ connected: z.boolean().optional() }).optional(),
+    }).loose().optional(),
+    workspace: z.object({ current_dir: z.string().optional() }).loose().optional(),
+    remote: z.object({ connected: z.boolean().optional() }).loose().optional(),
     version: z.string().optional(),
     allow_all_enabled: z.boolean().optional(),
     cost: z.object({
@@ -25,11 +25,11 @@ export const CopilotPayloadSchema = z.object({
         total_lines_added: z.number().optional(),
         total_lines_removed: z.number().optional(),
         total_premium_requests: z.number().optional()
-    }).optional(),
+    }).loose().optional(),
     ai_used: z.object({
         formatted: z.string().nullable().optional(),
         total_nano_aiu: OptionalNumber
-    }).nullable().optional(),
+    }).loose().nullable().optional(),
     context_window: z.object({
         context_window_size: OptionalNumber,
         total_input_tokens: z.number().optional(),
@@ -51,8 +51,8 @@ export const CopilotPayloadSchema = z.object({
             output_tokens: z.number().optional(),
             cache_creation_input_tokens: z.number().optional(),
             cache_read_input_tokens: z.number().optional()
-        }).optional()
-    }).optional()
-});
+        }).loose().optional()
+    }).loose().optional()
+}).loose();
 
 export type CopilotPayload = z.infer<typeof CopilotPayloadSchema>;

@@ -10,7 +10,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class PremiumRateWidget implements Widget {
     getDefaultColor(): string { return 'yellow'; }
-    getDescription(): string { return 'Shows premium requests consumed per minute (burn rate)'; }
+    getDescription(): string { return 'Shows legacy premium requests per elapsed session minute'; }
     getDisplayName(): string { return 'Premium Rate'; }
     getCategory(): string { return 'Session'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {

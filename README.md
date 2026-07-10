@@ -229,6 +229,9 @@ Once configured, copilot-statusline automatically formats your Copilot CLI statu
 # Interactive TUI
 copilot-statusline
 
+# Print package version
+copilot-statusline --version
+
 # Piped mode with example payload
 bun run example
 ```
@@ -248,17 +251,19 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 | Version | `version` | Copilot CLI version number |
 | Thinking Effort | `thinking-effort` | Thinking effort level from payload fields or `display_name` (`minimal`/`low`/`medium`/`high`/`xhigh`/`max`) |
 | Model Multiplier | `model-multiplier` | Legacy/request-based premium multiplier when present (e.g., `3x`) |
+| Allow All | `allow-all` | Shows `YOLO` while Copilot allow-all mode is enabled |
 
 ### Session
 | Widget | Type | Description |
 |--------|------|-------------|
 | Session Name | `session-name` | Copilot conversation title |
 | Session ID | `session-id` | Short session identifier |
+| Remote Control Status | `remote-control-status` | Whether Copilot remote control is connected |
 | Session Clock | `session-clock` | Elapsed session time (from `total_duration_ms`) |
 | AI Credits | `ai-credits` | GitHub AI Credits used this session (from `ai_used.formatted`) |
-| Premium Requests | `premium-requests` | Total premium requests consumed |
-| API Calls | `api-calls` | Estimated API calls (`premium_requests / multiplier`) |
-| Premium Rate | `premium-rate` | Premium request burn rate (requests/minute) |
+| Premium Requests | `premium-requests` | Legacy premium request counter when the active billing path still reports it |
+| API Calls | `api-calls` | Rough legacy estimate (`premium_requests / current multiplier`); not reliable across model switches |
+| Premium Rate | `premium-rate` | Legacy premium request average per elapsed session minute |
 
 ### Tokens
 | Widget | Type | Description |
@@ -268,19 +273,20 @@ Copilot CLI spawns your status line command on every state change, passing sessi
 | Tokens Cached | `tokens-cached` | Cached input tokens (`total_cache_read_tokens + total_cache_write_tokens`; rendered as `Cached:`) |
 | Tokens Reasoning | `tokens-reasoning` | Total reasoning (thinking) tokens consumed |
 | Tokens Total | `tokens-total` | Total tokens |
-| Last Call Input | `last-call-input` | Input tokens from most recent API call |
-| Last Call Output | `last-call-output` | Output tokens from most recent API call |
+| Last Call Input | `last-call-input` | Best-effort dedicated last-call input; some 1.0.70 model/tier paths leave it zero or stale |
+| Last Call Output | `last-call-output` | Best-effort dedicated last-call output; some 1.0.70 model/tier paths leave it zero or stale |
 | Cache Read Tokens | `cache-read-tokens` | Total cache read tokens |
 | Cache Write Tokens | `cache-write-tokens` | Total cache write tokens |
+| Cache Hit Rate | `cache-hit-rate` | Cache reads ÷ (reads + writes); this is not cached share of total input |
 
 ### Context
 | Widget | Type | Description |
 |--------|------|-------------|
 | Context Length | `context-length` | Current context length in tokens (live, from `current_context_tokens`) |
-| Context Window | `context-window` | Model's context window size (max tokens, from `displayed_context_limit ?? context_window_size`) |
+| Context Window | `context-window` | Active context limit reported by Copilot (`displayed_context_limit`, falling back to `context_window_size`) |
 | Context % | `context-percentage` | Live context % from Copilot (`current_context_used_percentage`) |
 | Context Bar | `context-bar` | Visual progress bar for live context usage |
-| Remaining Tokens | `remaining-tokens` | Live remaining tokens (`displayed_context_limit − current_context_tokens`) |
+| Remaining Tokens | `remaining-tokens` | Live remaining tokens for the active reported context limit |
 
 ### Git
 | Widget | Type | Description |
@@ -341,17 +347,16 @@ These widgets are exclusive to copilot-statusline and not available in ccstatusl
 
 | Widget | Type | Description |
 |--------|------|-------------|
-| Model Multiplier | `model-multiplier` | Premium cost multiplier parsed from `display_name` (e.g., `3x`, `6x`) |
+| Model Multiplier | `model-multiplier` | Legacy premium multiplier parsed from `display_name` (e.g., `3x`, `6x`) |
+| Allow All | `allow-all` | Safety indicator shown while allow-all mode is active |
 | AI Credits | `ai-credits` | GitHub AI Credits used this session (`ai_used.formatted`, fallback from `total_nano_aiu`) |
-| Premium Requests | `premium-requests` | Total premium requests consumed this session |
-| API Calls | `api-calls` | Estimated actual API calls: `total_premium_requests / multiplier` |
-| Premium Rate | `premium-rate` | Burn rate in requests/minute |
-| Last Call Input | `last-call-input` | Input tokens from the most recent API call |
-| Last Call Output | `last-call-output` | Output tokens from the most recent API call |
+| Premium Requests | `premium-requests` | Legacy premium request counter when reported |
+| API Calls | `api-calls` | Rough legacy estimate: `total_premium_requests / current multiplier` |
+| Premium Rate | `premium-rate` | Legacy requests per elapsed session minute |
+| Last Call Input | `last-call-input` | Best-effort upstream last-call input; may be unavailable or stale |
+| Last Call Output | `last-call-output` | Best-effort upstream last-call output; may be unavailable or stale |
 | Remaining Tokens | `remaining-tokens` | Live remaining tokens (`displayed_context_limit − current_context_tokens`) |
 | Tokens Reasoning | `tokens-reasoning` | Total reasoning (thinking) tokens consumed |
-| Cache Read Tokens | `cache-read-tokens` | Total cache read tokens |
-| Cache Write Tokens | `cache-write-tokens` | Total cache write tokens |
 
 ---
 
@@ -503,7 +508,7 @@ When terminal width is detected, status lines automatically truncate with ellips
 
 Renders as:
 ```
-Model: gpt-5.5 | Thinking: xhigh | Ctx Used: 2.0% | AIC: 12.8 | Session: 1m             ⎇ main
+Model: gpt-5.6-sol | Thinking: low | Ctx Used: 6.0% | AIC: 13.3 | Session: 2m             ⎇ main
 ```
 
 ### Color Levels
@@ -538,7 +543,7 @@ bun install
 ```bash
 bun run start          # Run TUI mode
 bun run example        # Test with example payload
-bun test               # Run tests (71 tests)
+bun test               # Run tests
 bun run lint           # Type check + ESLint
 bun run lint:fix       # Auto-fix lint issues
 bun run build          # Build for npm distribution
@@ -561,7 +566,7 @@ copilot-statusline/
 │   │   ├── Settings.ts          # Configuration schema
 │   │   ├── Widget.ts            # Widget interface
 │   │   └── RenderContext.ts     # Render context type
-│   ├── widgets/                 # 50 widget implementations
+│   ├── widgets/                 # Widget implementations
 │   │   ├── Model.ts
 │   │   ├── PremiumRequests.ts
 │   │   ├── GitBranch.ts
@@ -598,8 +603,8 @@ copilot-statusline and ccstatusline are **fully independent** — they use separ
 | **Speed metrics** | Input/output/total token speed | Not available (no per-request timing data) |
 | **Session duration** | Parsed from transcript JSONL | Direct from `cost.total_duration_ms` |
 | **Rate limits** | 5-hour blocks, weekly resets | AI Credits and premium request tracking |
-| **Copilot-exclusive** | — | AI Credits, model multiplier, premium rate, API calls, cache tokens, last-call tokens |
-| **ccstatusline-exclusive** | Vim mode, output style, skills, worktree, block timer, speed widgets | — |
+| **Copilot-exclusive** | — | AI Credits, allow-all state, model multiplier, legacy premium metrics, reasoning and last-call tokens |
+| **ccstatusline-exclusive** | Vim mode, output style, skills, block/usage timers, voice, compaction, speed widgets | — |
 
 ---
 

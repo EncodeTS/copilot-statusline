@@ -12,7 +12,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class LastCallOutputWidget implements Widget {
     getDefaultColor(): string { return 'green'; }
-    getDescription(): string { return 'Shows output tokens from the most recent API call'; }
+    getDescription(): string { return 'Shows best-effort dedicated last-call output tokens'; }
     getDisplayName(): string { return 'Last Call Output'; }
     getCategory(): string { return 'Tokens'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {

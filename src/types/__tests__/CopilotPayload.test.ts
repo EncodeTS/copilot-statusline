@@ -200,6 +200,31 @@ describe('CopilotPayloadSchema', () => {
         expect(result.success).toBe(true);
     });
 
+    it('preserves unknown payload fields for forward compatibility', () => {
+        const result = CopilotPayloadSchema.safeParse({
+            future_top_level: { enabled: true },
+            model: {
+                id: 'future-model',
+                future_model_field: 'value'
+            },
+            context_window: {
+                future_context_field: 123,
+                current_usage: {
+                    input_tokens: 42,
+                    future_usage_field: 'value'
+                }
+            }
+        });
+
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.future_top_level).toEqual({ enabled: true });
+            expect(result.data.model?.future_model_field).toBe('value');
+            expect(result.data.context_window?.future_context_field).toBe(123);
+            expect(result.data.context_window?.current_usage?.future_usage_field).toBe('value');
+        }
+    });
+
     it('rejects non-object input', () => {
         expect(CopilotPayloadSchema.safeParse('invalid').success).toBe(false);
         expect(CopilotPayloadSchema.safeParse(42).success).toBe(false);

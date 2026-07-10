@@ -70,6 +70,18 @@ describe('parseDisplayName', () => {
         expect(result.multiplier).toBeNull();
     });
 
+    it('parses current GPT-5.6 long-context display names', () => {
+        const result = parseDisplayName('gpt-5.6-sol · high · 1.1M context');
+        expect(result.thinkingEffort).toBe('high');
+        expect(result.multiplier).toBeNull();
+    });
+
+    it('ignores Grok preview metadata while parsing effort', () => {
+        const result = parseDisplayName('Grok 4.5 (internal preview) · medium');
+        expect(result.thinkingEffort).toBe('medium');
+        expect(result.multiplier).toBeNull();
+    });
+
     it('parses multiplier from middle-dot display segments', () => {
         const result = parseDisplayName('claude-opus-4.6 · 3x · high');
         expect(result.thinkingEffort).toBe('high');

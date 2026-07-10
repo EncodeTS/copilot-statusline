@@ -12,7 +12,7 @@ Build `copilot-statusline`, a standalone TypeScript program that provides the sa
 
 ## 2. Copilot Payload — Available Data
 
-Copilot sends JSON via stdin with this structure (from captured payloads):
+Copilot sends JSON via stdin with this structure (verified against a post-call Copilot CLI 1.0.70 payload on July 10, 2026):
 
 ```typescript
 interface CopilotPayload {
@@ -20,13 +20,22 @@ interface CopilotPayload {
   session_id: string;
   session_name: string | null;            // Copilot-unique: conversation title
   transcript_path: string;                // Session state directory
+  username: string | null;
   model: {
     id: string | null;                    // e.g. "claude-opus-4.7-1m-internal"
     display_name: string | null;          // e.g. "Claude Opus 4.7 (1M context) (10x) (xhigh)"
+    thinking_effort_level?: string;
+    thinking_effort?: string;
+    reasoning_effort?: string;
   };
   workspace: { current_dir: string };
   remote: { connected: boolean };         // Copilot-unique: `/remote` session control toggle (drive CLI from GitHub web/mobile)
   version: string;                        // Copilot CLI version
+  allow_all_enabled: boolean;             // True while allow-all / YOLO mode is active
+  ai_used: {
+    formatted: string | null;             // Human-readable GitHub AI Credits used
+    total_nano_aiu: number | null;         // 1 AI Credit = 1,000,000,000 nano AIU
+  } | null;
   cost: {
     total_api_duration_ms: number;
     total_duration_ms: number;            // Wall-clock session duration
@@ -42,15 +51,15 @@ interface CopilotPayload {
     total_cache_write_tokens: number;     // Copilot-unique
     total_reasoning_tokens: number;       // Copilot-unique: thinking/reasoning tokens
     total_tokens: number;
-    used_percentage: number | null;       // Cumulative-token % vs context_window_size
-    remaining_percentage: number | null;
-    remaining_tokens: number | null;      // Copilot-unique: absolute remaining
-    last_call_input_tokens: number;       // Copilot-unique
-    last_call_output_tokens: number;      // Copilot-unique
+    used_percentage: number | null;       // Legacy last-call % vs raw context_window_size
+    remaining_percentage: number | null;  // Inverse of used_percentage
+    remaining_tokens: number | null;      // Raw window minus last-call input/output; not live remaining
+    last_call_input_tokens: number;       // Model/tier dependent; may remain 0 or stale in CLI 1.0.70
+    last_call_output_tokens: number;      // Model/tier dependent; may remain 0 or stale in CLI 1.0.70
     current_context_tokens: number | null;          // Copilot-unique: live context occupancy
     current_context_used_percentage: number | null; // Copilot-unique: live context % (preferred for UI bars)
-    displayed_context_limit: number | null;         // Copilot-unique: denominator Copilot uses for current_context_used_percentage. Differs from context_window_size on some models (e.g. gpt-5.5 = 304000 vs raw 400000)
-    current_usage?: {                     // Only after first API call
+    displayed_context_limit: number | null;         // Active denominator used by Copilot's context UI
+    current_usage?: {                     // Current-model cumulative slice in CLI 1.0.70
       input_tokens: number;
       output_tokens: number;
       cache_creation_input_tokens: number;
@@ -60,7 +69,11 @@ interface CopilotPayload {
 }
 ```
 
-> **Note on `total_*` vs `current_context_*`** — `total_*` fields and `used_percentage` are **cumulative** over the entire session (every input token ever sent, including re-sent cache content). `current_context_tokens` / `current_context_used_percentage` reflect the **live context window occupancy right now** and are usually the more meaningful values for status bars.
+> **Metric scopes verified across model switches** — `total_*` fields are cumulative across the whole session and all models. `current_usage` resets on model switch, then accumulates only that current model's slice. `last_call_*` are intended to represent the latest call but are not reliable on every model/tier path. The legacy `used_percentage`, `remaining_percentage`, and `remaining_tokens` are derived from `last_call_*` against raw `context_window_size`; they are not live context metrics. `current_context_tokens` / `current_context_used_percentage` reflect live occupancy and are the correct source for status bars.
+
+> **Observed 1.0.70 behavior** — Across multiple GPT-5.6 calls, `last_call_input_tokens` / `last_call_output_tokens` remained `0`, while `current_usage.input_tokens` grew cumulatively. After switching models, GPT-5.5 default and Grok populated `last_call_*`; a subsequent GPT-5.5 long-context call left the previous default-context values unchanged. Last-call widgets are therefore best-effort: they render only positive dedicated fields, but upstream can leave those fields stale on some model/tier paths.
+>
+> **Context-tier behavior** — Interactive long-context selection is verified to report a 1.05M `displayed_context_limit`, producing status output such as `25k/1.1M (2%)`. An isolated CLI 1.0.70 `--context long_context` prompt/resume probe recorded `contextTier: "long_context"` in `events.jsonl` but temporarily kept the custom payload at the default 400k limit. This appears specific to CLI flag/resume synchronization; widgets should continue trusting the live `displayed_context_limit` supplied by Copilot.
 
 > **No worktree fields** — Copilot CLI's payload does **not** expose worktree state (no `worktree`, `branch`, or similar object), even when the CLI is invoked inside a linked git worktree. Worktree-aware widgets must detect state via `git` commands themselves (see `GitWorktree` / `GitWorktreeMode`).
 
@@ -76,6 +89,8 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 |---|---|---|
 | Model | Model | `model.id` / `model.display_name` |
 | Version | Version | `version` (Copilot CLI version) |
+| Remote Control Status | Remote Control Status | `remote.connected` |
+| Allow All | Allow All | `allow_all_enabled` |
 | Session Name | Session Name | `session_name` (Copilot-unique) |
 | Session ID | Session ID | `session_id` |
 | Current Working Dir | Current Working Dir | `cwd` / `workspace.current_dir` |
@@ -84,18 +99,19 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 | Tokens Input | Tokens Input | `context_window.total_input_tokens - total_cache_read_tokens - total_cache_write_tokens` |
 | Tokens Output | Tokens Output | `context_window.total_output_tokens` |
 | Tokens Cached | Tokens Cached | `context_window.total_cache_read_tokens + total_cache_write_tokens` |
+| Cache Hit Rate | Cache Hit Rate | `cache_read / (cache_read + cache_write)`; not cache share of total input |
 | Tokens Total | Tokens Total | `context_window.total_tokens` |
 | Context Length | Context Length | `context_window.current_context_tokens` (live, aligns with ccstatusline semantics) |
-| Context Window | Context Window | `context_window.displayed_context_limit ?? context_window_size` |
+| Context Window | Context Window | Active limit: `context_window.displayed_context_limit ?? context_window_size` |
 | Context % | Context % | `context_window.current_context_used_percentage` (live; capped at 100) |
 | Context Bar | Context Bar | `context_window.current_context_used_percentage` for the bar percentage; `current_context_tokens` / `displayed_context_limit` for the `used/total` label |
 | Session Clock | Session Clock | `cost.total_duration_ms` (directly from payload!) |
 | Session Cost | AI Credits | `ai_used.formatted` / `ai_used.total_nano_aiu` |
 | Session Cost | Premium Requests | `cost.total_premium_requests` (legacy/request-based counter) |
 | Git Branch | Git Branch | `git` command (same as ccstatusline) |
-| Git Changes | Git Changes | `cost.total_lines_added + total_lines_removed` or git |
-| Git Insertions | Git Insertions | `cost.total_lines_added` or git |
-| Git Deletions | Git Deletions | `cost.total_lines_removed` or git |
+| Git Changes | Git Changes | `git` command |
+| Git Insertions | Git Insertions | `git` command |
+| Git Deletions | Git Deletions | `git` command |
 | Git Status | Git Status | `git` command |
 | Git Staged/Unstaged/Untracked/Conflicts | Same | `git` command |
 | Git Staged/Unstaged/Untracked Files | Same | `git` command (`git status --porcelain -z`) |
@@ -116,8 +132,8 @@ Scripts receive `COPILOT_CLI`, `COPILOT_CLI_BINARY_VERSION`, `COPILOT_RUN_APP`, 
 | Thinking Effort | Thinking Effort | Parsed from `model.display_name` (see below) |
 | Link | Link | Config |
 | **NEW:** Model Multiplier | Model Multiplier | Parsed from `model.display_name` (see below) |
-| **NEW:** Last Call Tokens | Last Call Input/Output | `context_window.last_call_*` (Copilot-unique) |
-| **NEW:** Remaining Tokens | Remaining Tokens | `displayed_context_limit − current_context_tokens` (Copilot-unique; live remaining) |
+| **NEW:** Last Call Tokens | Last Call Input/Output | Best-effort positive `context_window.last_call_*`; may be stale upstream |
+| **NEW:** Remaining Tokens | Remaining Tokens | `displayed_context_limit − current_context_tokens` (live remaining) |
 
 #### Parsing model effort and multiplier
 
@@ -133,7 +149,7 @@ Observed `model.display_name` formats include both the older parenthesized style
 Examples:
 - `"claude-opus-4.6 (3x) (high)"` → multiplier = `3x`, effort = `high`
 - `"Claude Opus 4.6 (1M context)(Internal only) (high)"` → effort = `high` (multiplier absent in this variant)
-- `"gpt-5.5 · xhigh · 1.1M context"` → effort = `xhigh` (multiplier absent in this variant)
+- `"gpt-5.6-sol · low"` → effort = `low` (multiplier absent in this variant)
 
 The parser extracts parenthesized tokens and middle-dot / bullet / pipe / comma-separated display segments. Then:
 
@@ -153,10 +169,10 @@ The parser extracts parenthesized tokens and middle-dot / bullet / pipe / comma-
 | Output Style | Copilot payload has no `output_style` field |
 | Vim Mode | Copilot payload has no `vim` field |
 | Input/Output/Total Speed | No transcript JSONL for per-request timing (transcript_path is a directory, not a JSONL file) |
-| Block Timer / Block Reset Timer | Copilot uses premium_requests, no 5-hour block system |
+| Block Timer / Block Reset Timer | Copilot uses AI Credits and exposes no 5-hour block state |
 | Weekly Reset Timer | No rate_limits data in Copilot |
 | Session Usage / Weekly Usage | No rate_limits data in Copilot |
-| Skills widget | No hook system observed in Copilot |
+| Skills widget | Copilot payload does not expose active skill state |
 | Worktree widget data fields | Copilot payload has no worktree object (verified May 2026 — even when CLI runs inside a linked worktree, no `worktree`/`branch` fields appear). Local widgets `git-worktree` and `git-worktree-mode` work around this by probing `git rev-parse --git-dir` directly. |
 | Claude Account Email | No account info in Copilot payload |
 
@@ -165,15 +181,14 @@ The parser extracts parenthesized tokens and middle-dot / bullet / pipe / comma-
 | Widget | Description | Data Source |
 |---|---|---|
 | Model Multiplier | Legacy/request-based premium multiplier when present (e.g. `3x`) | Parsed from `model.display_name` |
+| Allow All | Shows `YOLO` only while allow-all mode is active | `allow_all_enabled` |
 | AI Credits | GitHub AI Credits used this session | `ai_used.formatted` (fallback: `ai_used.total_nano_aiu / 1_000_000_000`) |
-| Premium Requests | Total premium requests consumed this session | `cost.total_premium_requests` |
-| API Calls | Estimated actual API calls this session | `cost.total_premium_requests / multiplier` |
-| Premium Rate | Premium requests consumed per minute (burn rate) | `cost.total_premium_requests / (cost.total_duration_ms / 60000)` |
-| Last Call Input | Input tokens in most recent API call | `context_window.last_call_input_tokens` |
-| Last Call Output | Output tokens in most recent API call | `context_window.last_call_output_tokens` |
-| Remaining Tokens | Live remaining tokens in context (`displayed_context_limit − current_context_tokens`) | computed |
-| Cache Read Tokens | Total cache read tokens | `context_window.total_cache_read_tokens` |
-| Cache Write Tokens | Total cache write tokens | `context_window.total_cache_write_tokens` |
+| Premium Requests | Legacy premium request counter when reported | `cost.total_premium_requests` |
+| API Calls | Rough legacy estimate; inaccurate after model switches | `cost.total_premium_requests / current multiplier` |
+| Premium Rate | Legacy premium requests per elapsed session minute | `cost.total_premium_requests / (cost.total_duration_ms / 60000)` |
+| Last Call Input | Best-effort upstream last-call input; may be stale | Positive `last_call_input_tokens` |
+| Last Call Output | Best-effort upstream last-call output; may be stale | Positive `last_call_output_tokens` |
+| Remaining Tokens | Live remaining tokens for the active reported context limit | `displayed_context_limit − current_context_tokens` |
 | Tokens Reasoning | Total reasoning (thinking) tokens consumed | `context_window.total_reasoning_tokens` |
 
 ## 4. Architecture
@@ -326,6 +341,7 @@ bun run lint                          # Type check + ESLint
 
 # Usage (installed or npx)
 copilot-statusline                    # TUI configuration
+copilot-statusline --version          # Print package version and exit
 echo '<json>' | copilot-statusline    # Piped rendering
 
 # Copilot integration (~/.copilot/config.json)
@@ -342,17 +358,17 @@ echo '<json>' | copilot-statusline    # Piped rendering
 
 ### Unit Tests
 
-- **Payload parsing:** Zod schema validates all captured payloads, handles null/missing fields at each lifecycle stage
+- **Payload parsing:** Zod schema validates known fields, preserves unknown fields, and handles null/missing lifecycle states
 - **Widget rendering:** Each widget renders correctly given known context data
-- **Token computation:** Cached token aggregation (read + write), remaining tokens
+- **Token computation:** Non-overlapping input/cache buckets, cache hit rate, live remaining tokens, and safe handling of unavailable 1.0.70 last-call fields
 - **Session clock:** Formats `total_duration_ms` correctly
 - **Model display:** Parses legacy `"model-id (Nx) (level)"` and current `"model-id · level · context"` display-name formats
 - **Thinking Effort parsing:** Correctly extracts effort levels (`minimal`/`low`/`medium`/`high`/`xhigh`/`max`) from payload fields and display names; returns null for unrecognized display-name formats
 - **Model Multiplier parsing:** Correctly extracts multiplier (`3x`, `6x`, `1x`) from `display_name`; returns null when absent
-- **API Calls computation:** Correctly divides `total_premium_requests` by multiplier; returns null when multiplier unavailable
+- **API Calls computation:** Legacy rough estimate divides `total_premium_requests` by the current multiplier and returns null when unavailable
 - **Premium Rate computation:** Correctly computes requests/minute; handles zero duration gracefully
 - **Context percentage:** Handles null values during startup phase
-- **Git widgets:** Same test coverage as ccstatusline
+- **Git widgets:** Status parsing, cache invalidation, and representative widget rendering
 
 ### Integration Tests
 

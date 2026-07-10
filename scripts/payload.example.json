@@ -5,8 +5,8 @@
   "transcript_path": "/Users/example/.copilot/session-state/00000000-0000-0000-0000-000000000000",
   "username": null,
   "model": {
-    "id": "gpt-5.5",
-    "display_name": "gpt-5.5 · xhigh · 1.1M context"
+    "id": "gpt-5.6-sol",
+    "display_name": "gpt-5.6-sol · low"
   },
   "workspace": {
     "current_dir": "/Users/example/workspace/project"
@@ -14,40 +14,40 @@
   "remote": {
     "connected": false
   },
-  "version": "1.0.64-1",
+  "version": "1.0.70",
   "allow_all_enabled": false,
   "ai_used": {
-    "formatted": "12.8",
-    "total_nano_aiu": 12791900000
+    "formatted": "13.3",
+    "total_nano_aiu": 13250250000
   },
   "cost": {
-    "total_api_duration_ms": 10418,
+    "total_api_duration_ms": 3897,
     "total_lines_added": 0,
     "total_lines_removed": 0,
-    "total_duration_ms": 83916,
-    "total_premium_requests": 15
+    "total_duration_ms": 126452,
+    "total_premium_requests": 0
   },
   "context_window": {
-    "total_input_tokens": 45775,
-    "total_output_tokens": 14,
-    "total_cache_read_tokens": 22528,
+    "total_input_tokens": 21177,
+    "total_output_tokens": 5,
+    "total_cache_read_tokens": 0,
     "total_cache_write_tokens": 0,
     "total_reasoning_tokens": 0,
-    "total_tokens": 45789,
+    "total_tokens": 21182,
     "context_window_size": 1050000,
-    "used_percentage": 4,
-    "remaining_percentage": 96,
-    "remaining_tokens": 1004211,
-    "last_call_input_tokens": 22922,
-    "last_call_output_tokens": 8,
-    "current_context_tokens": 24008,
-    "displayed_context_limit": 1050000,
-    "current_context_used_percentage": 2,
+    "used_percentage": 0,
+    "remaining_percentage": 100,
+    "remaining_tokens": 1050000,
+    "last_call_input_tokens": 0,
+    "last_call_output_tokens": 0,
+    "current_context_tokens": 22521,
+    "displayed_context_limit": 400000,
+    "current_context_used_percentage": 6,
     "current_usage": {
-      "input_tokens": 22922,
-      "output_tokens": 8,
+      "input_tokens": 21177,
+      "output_tokens": 5,
       "cache_creation_input_tokens": 0,
-      "cache_read_input_tokens": 22528
+      "cache_read_input_tokens": 0
     }
   }
 }

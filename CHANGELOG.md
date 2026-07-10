@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.1.21
+
+- Added Copilot payload passthrough handling so future fields remain available to custom commands.
+- Prevented last-call widgets from mislabeling per-model cumulative `current_usage` when a CLI 1.0.70 model leaves `last_call_*` at zero.
+- Added Allow All, Remote Control Status, and Cache Hit Rate widgets.
+- Updated the captured example payload for Copilot CLI 1.0.70 and clarified context-tier reporting behavior.
+- Fixed published package entry points and added `--version`, following recent ccstatusline improvements.
+
 ## 0.1.20
 
 - Added Copilot CLI 1.0.64 payload compatibility for `allow_all_enabled`.

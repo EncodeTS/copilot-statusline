@@ -19,7 +19,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class ApiCallsWidget implements Widget {
     getDefaultColor(): string { return 'cyan'; }
-    getDescription(): string { return 'Shows estimated actual API calls (premium_requests / multiplier)'; }
+    getDescription(): string { return 'Shows a rough legacy call estimate using the current model multiplier'; }
     getDisplayName(): string { return 'API Calls'; }
     getCategory(): string { return 'Session'; }
 

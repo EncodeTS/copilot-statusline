@@ -1,11 +1,19 @@
 {
   "name": "copilot-statusline",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "description": "A customizable status line formatter for GitHub Copilot CLI — based on ccstatusline",
-  "module": "src/copilot-statusline.ts",
+  "main": "./dist/copilot-statusline.js",
+  "module": "./dist/copilot-statusline.js",
   "type": "module",
   "bin": {
-    "copilot-statusline": "dist/copilot-statusline.js"
+    "copilot-statusline": "./dist/copilot-statusline.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/copilot-statusline.js",
+      "default": "./dist/copilot-statusline.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist/"

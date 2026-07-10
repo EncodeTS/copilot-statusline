@@ -29,6 +29,11 @@ function clampPercentage(value: number): number {
     return Math.max(0, Math.min(100, value));
 }
 
+function resolveLastCallTokens(reportedValue: unknown): number | null {
+    const reportedTokens = toFiniteNonNegativeNumber(reportedValue);
+    return reportedTokens !== null && reportedTokens > 0 ? reportedTokens : null;
+}
+
 export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMetrics {
     const contextWindow = data?.context_window;
 
@@ -65,8 +70,8 @@ export function getContextWindowMetrics(data?: CopilotPayload): ContextWindowMet
     const totalOutputTokens = toFiniteNonNegativeNumber(contextWindow.total_output_tokens);
     const cacheReadTokens = toFiniteNonNegativeNumber(contextWindow.total_cache_read_tokens);
     const cacheWriteTokens = toFiniteNonNegativeNumber(contextWindow.total_cache_write_tokens);
-    const lastCallInputTokens = toFiniteNonNegativeNumber(contextWindow.last_call_input_tokens);
-    const lastCallOutputTokens = toFiniteNonNegativeNumber(contextWindow.last_call_output_tokens);
+    const lastCallInputTokens = resolveLastCallTokens(contextWindow.last_call_input_tokens);
+    const lastCallOutputTokens = resolveLastCallTokens(contextWindow.last_call_output_tokens);
 
     // Copilot reports cache read/write as sub-buckets of total_input_tokens.
     // Expose upstream ccstatusline-style non-overlapping buckets:

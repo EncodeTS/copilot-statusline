@@ -18,7 +18,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class PremiumRequestsWidget implements Widget {
     getDefaultColor(): string { return 'green'; }
-    getDescription(): string { return 'Shows total premium requests consumed this session'; }
+    getDescription(): string { return 'Shows the legacy premium request counter when Copilot reports it'; }
     getDisplayName(): string { return 'Premium Requests'; }
     getCategory(): string { return 'Session'; }
 

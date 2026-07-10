@@ -12,7 +12,7 @@ import { formatRawOrLabeledValue } from './shared/raw-or-labeled';
 
 export class RemainingTokensWidget implements Widget {
     getDefaultColor(): string { return 'brightBlack'; }
-    getDescription(): string { return 'Shows remaining tokens in current context (displayed_context_limit − current_context_tokens)'; }
+    getDescription(): string { return 'Shows live remaining tokens for the active context limit'; }
     getDisplayName(): string { return 'Remaining Tokens'; }
     getCategory(): string { return 'Context'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {

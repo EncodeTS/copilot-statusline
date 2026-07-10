@@ -11,12 +11,15 @@ import type { Settings } from '../../types/Settings';
 import { DEFAULT_SETTINGS } from '../../types/Settings';
 import type { WidgetItem } from '../../types/Widget';
 import { AiCreditsWidget } from '../AiCredits';
+import { AllowAllWidget } from '../AllowAll';
 import { ApiCallsWidget } from '../ApiCalls';
+import { CacheHitRateWidget } from '../CacheHitRate';
 import { CacheReadTokensWidget } from '../CacheReadTokens';
 import { CacheWriteTokensWidget } from '../CacheWriteTokens';
 import { ContextBarWidget } from '../ContextBar';
 import { ContextLengthWidget } from '../ContextLength';
 import { ContextPercentageWidget } from '../ContextPercentage';
+import { ContextWindowWidget } from '../ContextWindow';
 import { CurrentWorkingDirWidget } from '../CurrentWorkingDir';
 import { LastCallInputWidget } from '../LastCallInput';
 import { LastCallOutputWidget } from '../LastCallOutput';
@@ -25,6 +28,7 @@ import { ModelMultiplierWidget } from '../ModelMultiplier';
 import { PremiumRateWidget } from '../PremiumRate';
 import { PremiumRequestsWidget } from '../PremiumRequests';
 import { RemainingTokensWidget } from '../RemainingTokens';
+import { RemoteControlStatusWidget } from '../RemoteControlStatus';
 import { SessionClockWidget } from '../SessionClock';
 import { SessionIdWidget } from '../SessionId';
 import { SessionNameWidget } from '../SessionName';
@@ -52,7 +56,9 @@ const postTurnPayload: CopilotPayload = {
     session_name: 'Say Hello',
     model: { id: 'claude-opus-4.6', display_name: 'claude-opus-4.6 (3x) (high)' },
     workspace: { current_dir: '/workspace' },
+    remote: { connected: true },
     version: '1.0.21',
+    allow_all_enabled: true,
     ai_used: {
         formatted: '12.8',
         total_nano_aiu: 12791900000
@@ -95,7 +101,9 @@ const startupPayload: CopilotPayload = {
     session_name: null,
     model: { id: null, display_name: null },
     workspace: { current_dir: '/workspace' },
+    remote: { connected: false },
     version: '1.0.21',
+    allow_all_enabled: false,
     ai_used: {
         formatted: '0',
         total_nano_aiu: 0
@@ -351,6 +359,30 @@ describe('ContextLengthWidget', () => {
     });
 });
 
+describe('ContextWindowWidget', () => {
+    const widget = new ContextWindowWidget();
+
+    it('renders the active default context limit instead of the larger raw model window', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                context_window_size: 1050000,
+                displayed_context_limit: 400000
+            }
+        };
+        expect(widget.render(item(), ctx(data), settings)).toBe('Window: 400.0k');
+    });
+
+    it('renders the 1.05M active limit after an interactive long-context switch', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                context_window_size: 1050000,
+                displayed_context_limit: 1050000
+            }
+        };
+        expect(widget.render(item(), ctx(data), settings)).toBe('Window: 1.1M');
+    });
+});
+
 describe('ContextPercentageWidget', () => {
     const widget = new ContextPercentageWidget();
 
@@ -461,6 +493,19 @@ describe('AiCreditsWidget', () => {
     });
 });
 
+describe('AllowAllWidget', () => {
+    const widget = new AllowAllWidget();
+
+    it('renders only when allow-all mode is enabled', () => {
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('YOLO');
+        expect(widget.render(item(), ctx(startupPayload), settings)).toBeNull();
+    });
+
+    it('supports a raw on value', () => {
+        expect(widget.render(item({ rawValue: true }), ctx(postTurnPayload), settings)).toBe('on');
+    });
+});
+
 describe('ApiCallsWidget', () => {
     const widget = new ApiCallsWidget();
 
@@ -503,6 +548,17 @@ describe('LastCallInputWidget', () => {
     it('renders last call input tokens', () => {
         expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Last In: 35.2k');
     });
+
+    it('returns null instead of mislabeling cumulative current_usage as the last call', () => {
+        const data: CopilotPayload = {
+            ...postTurnPayload,
+            context_window: {
+                ...postTurnPayload.context_window,
+                last_call_input_tokens: 0
+            }
+        };
+        expect(widget.render(item(), ctx(data), settings)).toBeNull();
+    });
 });
 
 describe('LastCallOutputWidget', () => {
@@ -510,6 +566,17 @@ describe('LastCallOutputWidget', () => {
 
     it('renders last call output tokens', () => {
         expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Last Out: 16');
+    });
+
+    it('returns null instead of mislabeling cumulative current_usage as the last call', () => {
+        const data: CopilotPayload = {
+            ...postTurnPayload,
+            context_window: {
+                ...postTurnPayload.context_window,
+                last_call_output_tokens: 0
+            }
+        };
+        expect(widget.render(item(), ctx(data), settings)).toBeNull();
     });
 });
 
@@ -532,6 +599,18 @@ describe('RemainingTokensWidget', () => {
         // 200000 - 36000 = 164000
         expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Remaining: 164.0k');
     });
+
+    it('uses the switched long-context limit instead of payload remaining_tokens', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                context_window_size: 1050000,
+                displayed_context_limit: 1050000,
+                current_context_tokens: 27588,
+                remaining_tokens: 1050000
+            }
+        };
+        expect(widget.render(item(), ctx(data), settings)).toBe('Remaining: 1.0M');
+    });
 });
 
 describe('CacheReadTokensWidget', () => {
@@ -547,6 +626,46 @@ describe('CacheWriteTokensWidget', () => {
 
     it('renders cache write tokens', () => {
         expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Cache W: 300');
+    });
+});
+
+describe('CacheHitRateWidget', () => {
+    const widget = new CacheHitRateWidget();
+
+    it('renders cumulative cache reads as a share of read plus write tokens', () => {
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Cache Hit: 62.5%');
+    });
+
+    it('renders raw percentage', () => {
+        expect(widget.render(item({ rawValue: true }), ctx(postTurnPayload), settings)).toBe('62.5%');
+    });
+
+    it('returns null until cache activity exists', () => {
+        expect(widget.render(item(), ctx(startupPayload), settings)).toBeNull();
+    });
+
+    it('reports 100% when all reported cacheable tokens are reads, regardless of total input', () => {
+        const data: CopilotPayload = {
+            context_window: {
+                total_input_tokens: 210861,
+                total_cache_read_tokens: 76029,
+                total_cache_write_tokens: 0
+            }
+        };
+        expect(widget.render(item(), ctx(data), settings)).toBe('Cache Hit: 100.0%');
+    });
+});
+
+describe('RemoteControlStatusWidget', () => {
+    const widget = new RemoteControlStatusWidget();
+
+    it('renders connected and disconnected payload states', () => {
+        expect(widget.render(item(), ctx(postTurnPayload), settings)).toBe('Remote: on');
+        expect(widget.render(item(), ctx(startupPayload), settings)).toBe('Remote: off');
+    });
+
+    it('returns null when remote state is unavailable', () => {
+        expect(widget.render(item(), ctx({}), settings)).toBeNull();
     });
 });
 
